@@ -1,0 +1,30 @@
+<ion-header>
+  <ion-navbar>
+    <ion-title>Entrar</ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding scroll="false">
+  <ion-list>
+    <form [formGroup]="loginForm">
+      <ion-item>
+        <ion-label stacked>Email</ion-label>
+        <ion-input type="email" formControlName="email"></ion-input>
+      </ion-item>
+      <ion-item class="no-border" *ngIf="loginForm.controls.email.invalid && (loginForm.controls.email.touched || submitAttempt)">
+        <p class="error-message">Por favor, digite um email válido.</p>
+      </ion-item>
+      <ion-item>
+        <ion-label stacked>Senha</ion-label>
+        <ion-input type="password" formControlName="password"></ion-input>
+      </ion-item>
+      <ion-item class="no-border" *ngIf="loginForm.controls.password.invalid && (loginForm.controls.password.touched || submitAttempt)">
+        <p class="error-message">Por favor, digite uma senha válida.</p>
+      </ion-item>
+    </form>
+  </ion-list>
+  <div class="center">
+    <button ion-button (click)="login()">Entrar</button>
+    <p>Ainda não tem conta? <a (click)="goToSignup()">Crie uma agora</a></p>
+  </div>
+</ion-content>
