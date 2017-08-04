@@ -1,0 +1,50 @@
+<ion-header>
+  <ion-navbar>
+    <ion-title>Cadastrar</ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding scroll="false">
+  <ion-list>
+    <form [formGroup]="signupForm">
+      <ion-item>
+        <ion-label stacked>Nome e sobrenome</ion-label>
+        <ion-input type="text" formControlName="name" validate-onblur></ion-input>
+      </ion-item>
+      <p class="error-message" *ngIf="signupForm.controls['name'].pristine && signupFormSubmitted">Insira seu nome.</p>
+      <p class="error-message" *ngIf="signupForm.controls['name'].hasError('invalidInput')">Insira seu nome e sobrenome.</p>
+      <ion-item>
+        <ion-label stacked>Idade</ion-label>
+        <ion-input type="number" formControlName="age" validate-onblur></ion-input>
+      </ion-item>
+      <p class="error-message" *ngIf="signupForm.controls['age'].pristine && signupFormSubmitted">Insira sua idade.</p>
+      <p class="error-message" *ngIf="signupForm.controls['age'].hasError('invalidInput')">Insira uma idade válida.</p>
+      <ion-item>
+        <ion-label stacked>Escola</ion-label>
+        <ion-input type="text" formControlName="school" validate-onblur></ion-input>
+      </ion-item>
+      <p class="error-message" *ngIf="signupForm.controls['school'].pristine && signupFormSubmitted">Insira o nome de sua escola.</p>
+      <p class="error-message" *ngIf="signupForm.controls['school'].hasError('invalidInput')">Insira um nome válido.</p>
+      <ion-item>
+        <ion-label stacked>E-mail</ion-label>
+        <ion-input type="email" formControlName="email" validate-onblur></ion-input>
+      </ion-item>
+      <p class="error-message" *ngIf="signupForm.controls['email'].pristine && signupFormSubmitted">Insira seu e-mail.</p>
+      <p class="error-message" *ngIf="signupForm.controls['email'].hasError('invalidInput')">Insira um e-mail válido.</p>
+      <ion-item>
+        <ion-label stacked>Senha</ion-label>
+        <ion-input type="password" formControlName="password" validate-onblur></ion-input>
+      </ion-item>
+      <p class="error-message" *ngIf="signupForm.controls['password'].pristine && signupFormSubmitted">Insira uma senha.</p>
+      <p class="error-message" *ngIf="signupForm.controls['password'].hasError('invalidInput')">A senha precisa ter entre 6 e 20 caracteres.</p>
+      <ion-item>
+        <ion-label stacked>Confirmação de senha</ion-label>
+        <ion-input type="password" formControlName="confirmPassword" validate-onblur></ion-input>
+      </ion-item>
+      <p class="error-message" *ngIf="signupForm.controls['confirmPassword'].touched && signupForm.controls['confirmPassword'].hasError('invalidInput')">As senhas não são iguais.</p>
+    </form>
+  </ion-list>
+  <div class="center">
+    <button ion-button (click)="createAccount()">Cadastrar</button>
+  </div>
+</ion-content>

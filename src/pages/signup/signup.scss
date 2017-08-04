@@ -1,4 +1,4 @@
-page-login {
+page-signup {
   .error-message {
     color: map-get($colors, danger);
     font-size: 0.9em;
@@ -9,7 +9,7 @@ page-login {
   .item-ios, .item-md {
   	padding-left: 0;
   }
-  .scroll-content {
-    padding: 40px !important;
+  .toolbar-title-md {
+    padding: 0;
   }
 }

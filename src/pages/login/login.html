@@ -9,22 +9,22 @@
     <form [formGroup]="loginForm">
       <ion-item>
         <ion-label stacked>Email</ion-label>
-        <ion-input type="email" formControlName="email"></ion-input>
+        <ion-input type="email" formControlName="email" validate-onblur></ion-input>
       </ion-item>
-      <ion-item class="no-border" *ngIf="loginForm.controls.email.invalid && (loginForm.controls.email.touched || submitAttempt)">
-        <p class="error-message">Por favor, digite um email válido.</p>
-      </ion-item>
+      <p class="error-message" *ngIf="loginForm.controls['email'].pristine && loginFormSubmitted">Insira seu e-mail.</p>
+      <p class="error-message" *ngIf="loginForm.controls['email'].hasError('invalidInput')">Insira um e-mail válido.</p>
+      <p class="error-message" *ngIf="loginForm.controls['email'].hasError('notFound')">E-mail não cadastrado.</p>
       <ion-item>
         <ion-label stacked>Senha</ion-label>
-        <ion-input type="password" formControlName="password"></ion-input>
+        <ion-input type="password" formControlName="password" validate-onblur></ion-input>
       </ion-item>
-      <ion-item class="no-border" *ngIf="loginForm.controls.password.invalid && (loginForm.controls.password.touched || submitAttempt)">
-        <p class="error-message">Por favor, digite uma senha válida.</p>
-      </ion-item>
+      <p class="error-message" *ngIf="loginForm.controls['password'].pristine && loginFormSubmitted">Insira sua senha.</p>
+      <p class="error-message" *ngIf="loginForm.controls['password'].hasError('invalidInput')">A senha precisa entre 6 e 20 caracteres.</p>
+      <p class="error-message" *ngIf="loginForm.controls['password'].hasError('wrongPassword')">Senha incorreta.</p>
     </form>
   </ion-list>
   <div class="center">
     <button ion-button (click)="login()">Entrar</button>
-    <p>Ainda não tem conta? <a (click)="goToSignup()">Crie uma agora</a></p>
+    <p>Ainda não tem conta? <a (click)="createAccount()">Crie uma agora</a></p>
   </div>
 </ion-content>
