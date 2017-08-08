@@ -1,4 +1,4 @@
-<ion-header>
+<ion-header no-border>
   <ion-navbar>
     <ion-title>Entrar</ion-title>
   </ion-navbar>
@@ -12,18 +12,18 @@
         <ion-input type="email" formControlName="email" validate-onblur></ion-input>
       </ion-item>
       <p class="error-message" *ngIf="loginForm.controls['email'].pristine && loginFormSubmitted">Insira seu e-mail.</p>
-      <p class="error-message" *ngIf="loginForm.controls['email'].hasError('invalidInput')">Insira um e-mail válido.</p>
+      <p class="error-message" *ngIf="loginForm.controls['email'].dirty && loginForm.controls['email'].hasError('invalidInput')">Insira um e-mail válido.</p>
       <p class="error-message" *ngIf="loginForm.controls['email'].hasError('notFound')">E-mail não cadastrado.</p>
       <ion-item>
         <ion-label stacked>Senha</ion-label>
         <ion-input type="password" formControlName="password" validate-onblur></ion-input>
       </ion-item>
       <p class="error-message" *ngIf="loginForm.controls['password'].pristine && loginFormSubmitted">Insira sua senha.</p>
-      <p class="error-message" *ngIf="loginForm.controls['password'].hasError('invalidInput')">A senha precisa entre 6 e 20 caracteres.</p>
+      <p class="error-message" *ngIf="loginForm.controls['password'].dirty && loginForm.controls['password'].hasError('invalidInput')">A senha precisa ter entre 6 e 20 caracteres.</p>
       <p class="error-message" *ngIf="loginForm.controls['password'].hasError('wrongPassword')">Senha incorreta.</p>
     </form>
   </ion-list>
-  <div class="center">
+  <div class="vertical-center">
     <button ion-button (click)="login()">Entrar</button>
     <p>Ainda não tem conta? <a (click)="createAccount()">Crie uma agora</a></p>
   </div>

@@ -10,23 +10,131 @@
 }
 
 .button-md {
-	text-transform: none;
+  text-transform: none;
+  border-radius: 5px;
+}
+
+.vertical-center {
+  text-align: center;
 }
 
 ion-label {
-	font-size: 0.8em !important;
+  font-size: 0.8em !important;
 }
 
 .no-border > .item-inner {
-	border-bottom: none !important;
+  border-bottom: none !important;
 }
 
 .list-md .item-input {
-	border-bottom: none !important;
+  border-bottom: none !important;
+  margin-bottom: 1em;
+}
+
+.list-md .item-block .item-inner {
+  border-bottom: 2px solid map-get($colors, primarylighten);
+}
+
+.audio-button-container {
+  position: initial;
+}
+
+.audio-button {
+  width: 50px;
+  height: 50px !important;
+  background-color: map-get($colors, primary);
+  color: white;
+  // box-shadow: 0px 0px 0px 20px rgba(255,255,255,1);
+  opacity: 1;
+  position: absolute;
+  right: 0;
+  bottom: 15px;
+  z-index: 10;
+}
+
+.hide-with-fade {
+  transition: opacity 300ms;
+  opacity: 0;
+}
+
+.error-message {
+  color: map-get($colors, danger);
+  font-size: 0.9em;
+}
+
+.audio-recorder {
+  background-color: map-get($colors, primary);
+  width: 0%;
+  border-radius: 5px;
+  height: 50px;
+  transition: width 300ms;
+  position: absolute;
+  right: 0;
+  bottom: 15px;
+  margin: 4px 4px 4px 0;
+}
+
+.audio-recorder-controls {
+  opacity: 0;
+  text-align: center;
+}
+
+.time-counter {
+  font-size: 1.1em;
+  color: #fff;
+}
+
+.record-control {
+  font-size: 2em;
+  padding: 11px;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+.cancel-record, .delete-record {
+  color: palevioletred;
+}
+
+.play-record {
+  padding: 11px 15px;
+  color: #fff;
+}
+
+.stop-playing {
+  color: #fff;
+}
+
+.delete-record {
+  left: initial;
+  right: 0;
+}
+
+.fade-in {
+  opacity: 1;
+  transition: opacity 300ms;
+  transition-delay: 500ms;
+}
+
+.show-recorder {
+  width: 99%;
+}
+
+.audio-button.activated {
+  background-color: map-get($colors, primary);
+  box-shadow: none !important;
+}
+
+.grid, .col {
+  padding: 0;
+}
+
+.row {
+  position: relative;
 }
 
 //.list-md .item-input:last-child {
-//	border-bottom: none !important;
+//  border-bottom: none !important;
 //}
 
 //.item-md.item-input.input-has-focus .item-inner {
@@ -69,4 +177,43 @@ ion-label {
 
 .loading-md .loading-wrapper {
   box-shadow: 0px 0px 47px 6px rgba(0,0,0,0.25);
+}
+
+// ion-header {
+//   text-align: center;
+// }
+
+.title.title-md {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  height: 100%;
+  width: 70%;
+  text-align: center;
+}
+
+.toolbar-title-md, .toolbar-title-ios {
+  font-weight: normal;
+  font-size: 1.1em;
+}
+
+.toolbar-ios, .toolbar-md {
+  min-height: 60px;
+}
+
+ion-footer {
+  height: 70px;
+}
+
+.button-ios {
+  font-size: 1em;
+}
+
+.scroll-content {
+  padding-top: 0 !important;
+}
+
+.toolbar-background-md {
+  background: #fff;
 }

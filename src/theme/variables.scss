@@ -35,6 +35,7 @@ $app-direction: ltr;
 
 $colors: (
   primary:    #5125ad,
+  primarylighten: rgba(81, 37, 173, 0.1), //same as primary but with transparency
   secondary:  #6ed38c,
   danger:     #f53d3d,
   light:      #f4f4f4,

@@ -1,14 +1,21 @@
-<ion-header>
+<ion-header no-border>
   <ion-navbar>
     <ion-title>
-      Ionic Blank
+      MEUS MAPAS
     </ion-title>
   </ion-navbar>
 </ion-header>
 
 <ion-content padding>
-  The world is your oyster.
-  <p>
-    If you get lost, the <a href="http://ionicframework.com/docs/v2">docs</a> will be your guide.
-  </p>
+  <p class="info-message" *ngIf="userMaps.size == 0">Você ainda não criou nenhum mapa. <br> Vamos criar um agora?</p>
 </ion-content>
+
+<ion-footer no-border>
+  <ion-toolbar>
+    <div class="vertical-center">
+      <button ion-button (click)="newMap()">Criar novo mapa</button>
+    </div>
+  </ion-toolbar>
+</ion-footer>
+
+<!-- usar componente CARD para mostrar lista de mapas e até mesmo a mensagem de info -->
