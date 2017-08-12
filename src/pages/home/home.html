@@ -7,7 +7,15 @@
 </ion-header>
 
 <ion-content padding>
-  <p class="info-message" *ngIf="userMaps.size == 0">Você ainda não criou nenhum mapa. <br> Vamos criar um agora?</p>
+  <p class="info-message" *ngIf="loadingFinished === true && userMaps.length == 0">Você ainda não criou nenhum mapa. <br> Vamos criar um agora?</p>
+  <div class="map-card" *ngFor="let map of userMaps">
+    <div class="map-title">{{ map.name }}</div>
+    <div class="map-markers-count" *ngIf="map.markers">{{ map.markers.length }} marcadores</div>    
+    <div class="map-markers-count" *ngIf="!map.markers">0 marcadores</div>    
+    <div class="edit-map">
+      <ion-icon name="create" (click)="editMap(map)"></ion-icon>
+    </div>
+  </div>
 </ion-content>
 
 <ion-footer no-border>
@@ -17,5 +25,3 @@
     </div>
   </ion-toolbar>
 </ion-footer>
-
-<!-- usar componente CARD para mostrar lista de mapas e até mesmo a mensagem de info -->

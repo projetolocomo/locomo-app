@@ -6,7 +6,10 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { HttpModule } from '@angular/http';
 import { Media, MediaObject } from '@ionic-native/media';
 import { File } from '@ionic-native/file';
+import { FileTransfer } from '@ionic-native/file-transfer';
 import { Diagnostic } from '@ionic-native/diagnostic';
+import { GoogleMaps } from '@ionic-native/google-maps';
+import { Network } from '@ionic-native/network';
 
 //directives
 import { ValidateOnBlurDirective } from '../directives/validate-onblur/validate-onblur';
@@ -15,6 +18,7 @@ import { ValidateOnBlurDirective } from '../directives/validate-onblur/validate-
 import { UserProvider } from '../providers/user.provider';
 import { PermissionProvider } from '../providers/permission.provider';
 import { FileProvider } from '../providers/file.provider';
+import { MapProvider } from '../providers/map.provider';
 
 //pages
 import { MyApp } from './app.component';
@@ -53,11 +57,15 @@ import { MapMainPage } from '../pages/map-main/map-main';
     SplashScreen,
     Media,
     File,
+    FileTransfer,
+    GoogleMaps,
+    Network,
     Diagnostic,
     {provide: ErrorHandler, useClass: IonicErrorHandler},
     UserProvider,
     PermissionProvider,
-    FileProvider
+    FileProvider,
+    MapProvider
   ]
 })
 export class AppModule {}

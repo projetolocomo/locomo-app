@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { NavController, Platform } from 'ionic-angular';
+import { NavController, LoadingController } from 'ionic-angular';
+import { File } from '@ionic-native/file';
 
 import { FileProvider } from '../../providers/file.provider';
 
@@ -12,11 +13,15 @@ import { CreateMapPage } from '../create-map/create-map';
 })
 export class HomePage {
 
-  constructor(private navCtrl: NavController,
-              private platform:Platform,
-              private fileProvider:FileProvider) {}
+  constructor(public navCtrl: NavController,
+              public loadingCtrl:LoadingController,
+              private fileProvider:FileProvider){}
 
-  private userMaps = new Map();
+  private userMaps = [];
+  private loadingFinished;
+  private loading = this.loadingCtrl.create({
+    content: 'Carregando mapas...'
+  });
 
   ionViewCanEnter():any{
   	if (localStorage.getItem("authData")){
@@ -26,16 +31,36 @@ export class HomePage {
   	}
   }
 
-  ionViewDidEnter():any{
-    if (!this.platform.is("mobileweb")){
-      this.fileProvider.prepareNeededFolders();
-    }
+  ionViewDidLoad():any{
     console.log('check if there is internet connection, if yes then check if token is valid');
-    console.log(this.userMaps.size);
+    this.loading.setShowBackdrop(false);
+    this.loading.present();
+    setTimeout(() => {
+      this.fileProvider.prepareNeededFolders();
+      this.loadMaps();
+    }, 1500)  
+  }
+
+  ionViewDidLeave():any{
+    this.loading.dismiss();
+  }
+
+  loadMaps(){
+    this.fileProvider.retrieveLocalMaps().then((maps) => {
+      this.userMaps = maps;
+      this.loading.dismiss().then(() => {
+        this.loadingFinished = true;
+      })
+    });
   }
 
   newMap():void{
     this.navCtrl.push(CreateMapPage);
+  }
+
+  editMap(map):void{
+    sessionStorage.setItem("mapToEdit", JSON.stringify(map));
+    this.navCtrl.push(CreateMapPage, { "parentPage":this });;
   }
 
 }

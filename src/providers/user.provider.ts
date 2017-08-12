@@ -6,33 +6,33 @@ import 'rxjs/add/operator/map';
 
 @Injectable()
 export class UserProvider {
-	constructor(public http:Http){}
+  constructor(public http:Http){}
 
-	private serverUrl:string = "http://192.168.0.51:3000/api";
+  private serverUrl:string = "http://192.168.0.51:3000/api";
 
-	login(loginData:any):any{
-		return this.http.post(this.serverUrl + '/login', loginData).map(
-		(response:Response) => {
-			this.saveAuthData(response.json());
-			return true;
-		}).catch(
-		(error:Response) => {
-			return Observable.throw(error);
-		});
-	};
+  login(loginData:any):any{
+    return this.http.post(this.serverUrl + '/login', loginData).map(
+    (response:Response) => {
+      this.saveAuthData(response.json());
+      return true;
+    }).catch(
+    (error:Response) => {
+      return Observable.throw(error);
+    });
+  };
 
-	createAccount(accountData:any):any{
-		return this.http.post(this.serverUrl + '/signup', accountData).map(
-		(response:Response) => {
-			this.saveAuthData(response.json());
-			return true;
-		}).catch(
-		(error:Response) => {
-			return Observable.throw(error);
-		});
-	}
+  createAccount(accountData:any):any{
+    return this.http.post(this.serverUrl + '/signup', accountData).map(
+    (response:Response) => {
+      this.saveAuthData(response.json());
+      return true;
+    }).catch(
+    (error:Response) => {
+      return Observable.throw(error);
+    });
+  }
 
-	saveAuthData(authData:any):void{
-		localStorage.setItem("authData", JSON.stringify(authData));
-	}
+  saveAuthData(authData:any):void{
+    localStorage.setItem("authData", JSON.stringify(authData));
+  }
 }

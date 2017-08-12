@@ -35,6 +35,38 @@ ion-label {
   border-bottom: 2px solid map-get($colors, primarylighten);
 }
 
+.map-card {
+  margin: 10px 0;
+  width: 100%;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+  display: block;
+  position: relative;
+}
+
+.edit-map {
+  font-size: 1.8em;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #383838;
+}
+
+.map-title {
+  padding: 10px;
+  font-size: 1.2em;
+}
+
+.map-markers-count {
+  padding: 0 10px 10px;
+}
+
 .audio-button-container {
   position: initial;
 }
