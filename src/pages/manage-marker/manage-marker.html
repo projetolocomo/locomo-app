@@ -1,0 +1,78 @@
+<ion-header no-border>
+  <ion-navbar>
+    <ion-title>
+      {{ pageTitle }}
+    </ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+  <ion-list>
+    <form [formGroup]="newMarkerForm">
+      <ion-item>
+        <ion-label stacked>Nome</ion-label>
+        <ion-input type="text" formControlName="name" validate-onblur></ion-input>
+      </ion-item>
+      <p class="error-message" *ngIf="newMarkerForm.controls['name'].pristine && markerFormSubmitted">A sua marcação precisa de um nome.</p>
+      <ion-grid>
+        <ion-row>
+          <ion-col col-9 [attr.col-12]="textualDescriptionInitiated()? true : null">
+            <ion-item>
+              <ion-label stacked>Descrição</ion-label>
+              <!-- <ion-input type="text" formControlName="textualDescription"></ion-input> -->
+              <ion-textarea formControlName="textualDescription"></ion-textarea>        
+            </ion-item>
+          </ion-col>
+          <ion-col col-3 [class.hide-with-fade]="textualDescriptionInitiated()" class="audio-button-container">
+            <button ion-button icon-only class="audio-button" (press)="startRecording()" (touchend)="stopRecording()" *ngIf="!isAudioRecorded"><ion-icon name="mic"></ion-icon></button>
+          </ion-col>
+          <ion-col col-12>
+            <div class="audio-recorder" [class.show-recorder]="recordingAudio || isAudioRecorded">
+              <div class="audio-recorder-controls" [class.fade-in]="recordingAudio || isAudioRecorded && isAudioLoaded">
+                <!-- <ion-icon class="record-control peak-indicator" name="close-circle" *ngIf="recordingAudio"></ion-icon> -->
+                <ion-icon class="record-control play-record" name="play" *ngIf="isAudioRecorded && !isPlayingAudio" (click)="playRecord()"></ion-icon>
+                <ion-icon class="record-control stop-playing" name="square" *ngIf="isPlayingAudio" (click)="stopPlayingRecord()"></ion-icon>
+                <ion-icon class="record-control delete-record" name="close-circle" *ngIf="isAudioRecorded" (click)="removeRecording()"></ion-icon>
+                <p class="time-counter" *ngIf="recordingAudio"> {{ secondsElapsed }} / 20'</p>
+                <p class="time-counter" *ngIf="isAudioRecorded"> {{ secondsElapsed }} / {{ audioDuration }}'</p>
+              </div>
+              <div class="loading-audio" *ngIf="editMode && !isAudioLoaded && mapToEdit.voiceDescription">
+                <ion-spinner></ion-spinner>
+                <p>Carregando...</p>
+              </div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+      <ion-item class="take-picture-title">
+        <ion-label stacked>Foto</ion-label>
+      </ion-item>
+      <!-- padding is removed when there is a picture inside it -->
+      <div class="image-thumbnail-container" [class.no-padding]="isPictureTook" (click)="takePicture()">
+        <!-- shown when the picture was not took yet -->
+        <div class="take-picture" *ngIf="!isPictureTook">
+          <ion-icon name="camera"></ion-icon>
+          <p>Tirar foto</p>
+        </div>
+        <!-- shown when the picture is already took -->
+        <div class="took-picture">
+          <div class="delete-picture-control" *ngIf="isPictureTook">
+            <ion-icon class="delete-record" name="close-circle" (click)="removePicture()"></ion-icon>
+          </div>
+          <img id="thumbnail" alt="">
+        </div>
+      </div>
+    </form>
+    <div class="vertical-center">
+      <button ion-button outline *ngIf="editMode" (click)="removeMarker()">Excluir marcação</button>
+    </div>
+  </ion-list>
+</ion-content>
+
+<ion-footer no-border>
+  <ion-toolbar>
+    <div class="vertical-center">
+      <button ion-button (click)="manageMarker()" (disabled)="newMarkerForm.valid">Salvar marcação</button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

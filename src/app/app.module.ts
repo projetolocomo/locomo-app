@@ -9,7 +9,9 @@ import { File } from '@ionic-native/file';
 import { FileTransfer } from '@ionic-native/file-transfer';
 import { Diagnostic } from '@ionic-native/diagnostic';
 import { GoogleMaps } from '@ionic-native/google-maps';
+import { Geolocation } from '@ionic-native/geolocation';
 import { Network } from '@ionic-native/network';
+import { Camera } from '@ionic-native/camera';
 
 //directives
 import { ValidateOnBlurDirective } from '../directives/validate-onblur/validate-onblur';
@@ -19,14 +21,16 @@ import { UserProvider } from '../providers/user.provider';
 import { PermissionProvider } from '../providers/permission.provider';
 import { FileProvider } from '../providers/file.provider';
 import { MapProvider } from '../providers/map.provider';
+import { MarkerProvider } from '../providers/marker.provider';
 
 //pages
 import { MyApp } from './app.component';
 import { LoginPage } from '../pages/login/login';
 import { SignupPage } from '../pages/signup/signup';
 import { HomePage } from '../pages/home/home';
-import { CreateMapPage } from '../pages/create-map/create-map';
+import { ManageMapPage } from '../pages/manage-map/manage-map';
 import { MapMainPage } from '../pages/map-main/map-main';
+import { ManageMarkerPage } from '../pages/manage-marker/manage-marker';
 
 @NgModule({
   declarations: [
@@ -35,8 +39,9 @@ import { MapMainPage } from '../pages/map-main/map-main';
     LoginPage,
     SignupPage,
     HomePage,
-    CreateMapPage,
-    MapMainPage
+    ManageMapPage,
+    MapMainPage,
+    ManageMarkerPage
   ],
   imports: [
     BrowserModule,
@@ -49,8 +54,9 @@ import { MapMainPage } from '../pages/map-main/map-main';
     LoginPage,
     SignupPage,
     HomePage,
-    CreateMapPage,
-    MapMainPage
+    ManageMapPage,
+    MapMainPage,
+    ManageMarkerPage
   ],
   providers: [
     StatusBar,
@@ -59,13 +65,16 @@ import { MapMainPage } from '../pages/map-main/map-main';
     File,
     FileTransfer,
     GoogleMaps,
+    Geolocation,
     Network,
     Diagnostic,
+    Camera,
     {provide: ErrorHandler, useClass: IonicErrorHandler},
     UserProvider,
     PermissionProvider,
     FileProvider,
-    MapProvider
+    MapProvider,
+    MarkerProvider
   ]
 })
 export class AppModule {}

@@ -8,26 +8,22 @@ import 'rxjs/add/operator/map';
 export class UserProvider {
   constructor(public http:Http){}
 
-  private serverUrl:string = "http://192.168.0.51:3000/api";
+  private serverUrl:string = "http://192.168.1.58:3000/api/";
 
   login(loginData:any):any{
-    return this.http.post(this.serverUrl + '/login', loginData).map(
-    (response:Response) => {
+    return this.http.post(this.serverUrl + 'login', loginData).map((response:Response) => {
       this.saveAuthData(response.json());
       return true;
-    }).catch(
-    (error:Response) => {
+    }).catch((error:Response) => {
       return Observable.throw(error);
     });
   };
 
   createAccount(accountData:any):any{
-    return this.http.post(this.serverUrl + '/signup', accountData).map(
-    (response:Response) => {
+    return this.http.post(this.serverUrl + 'signup', accountData).map((response:Response) => {
       this.saveAuthData(response.json());
       return true;
-    }).catch(
-    (error:Response) => {
+    }).catch((error:Response) => {
       return Observable.throw(error);
     });
   }

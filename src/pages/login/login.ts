@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { NavController, NavParams, LoadingController } from 'ionic-angular';
+import { AlertController,  LoadingController, NavController, NavParams } from 'ionic-angular';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { StatusBar } from '@ionic-native/status-bar';
 
 import { UserProvider } from '../../providers/user.provider';
+import { FileProvider } from '../../providers/file.provider';
 
 import { HomePage } from '../home/home';
 import { SignupPage } from '../signup/signup';
@@ -14,12 +14,13 @@ import { SignupPage } from '../signup/signup';
 })
 export class LoginPage {
 
-  constructor(private loadingCtrl:LoadingController,
-              private navCtrl:NavController,
-              private navParams:NavParams,
-              private fb:FormBuilder,
-              private userProvider:UserProvider,
-              private statusBar:StatusBar){}
+  constructor(public alertCtrl:AlertController,
+              public loadingCtrl:LoadingController,
+              public navCtrl:NavController,
+              public navParams:NavParams,
+              public fb:FormBuilder,
+              private fileProvider:FileProvider,
+              private userProvider:UserProvider){}
 
   loginForm = this.fb.group({
     email: ['', Validators.compose([Validators.email, Validators.required])],
@@ -31,21 +32,29 @@ export class LoginPage {
   login():void{
     this.loginFormSubmitted = true;
     if (this.loginForm.valid) {
-      let loading = this.loadingCtrl.create({
+      let loadingLogin = this.loadingCtrl.create({
         content: 'Entrando...'
       });
-      loading.setShowBackdrop(false);
-      loading.present();
+      loadingLogin.setShowBackdrop(false);
+      loadingLogin.present();
       this.userProvider.login(this.loginForm.value).subscribe((response) => {
-        loading.dismiss();
+        loadingLogin.dismiss();
+        this.fileProvider.checkCacheFolders();
         this.navCtrl.setRoot(HomePage);
       },
       (e) => {
-        loading.dismiss();
+        loadingLogin.dismiss();
         if (e._body == "notFound"){
           this.loginForm.controls['email'].setErrors({'notFound':true});
         } else if (e._body == "passwordsMismatch"){
           this.loginForm.controls['password'].setErrors({'wrongPassword':true});
+        } else {
+          let alert = this.alertCtrl.create({
+            title: 'Erro',
+            subTitle: 'Não foi possível conectar-se ao servidor. Verifique sua conexão e tente novamente.',
+            buttons: ['Ok']
+          });
+          alert.present();
         }
       });
     }

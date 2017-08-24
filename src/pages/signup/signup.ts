@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavController, NavParams, LoadingController } from 'ionic-angular';
+import { AlertController, LoadingController, NavController, NavParams } from 'ionic-angular';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { UserProvider } from '../../providers/user.provider';
@@ -13,12 +13,12 @@ import { HomePage } from '../home/home';
 })
 export class SignupPage {
 
-  constructor(
-    private navCtrl:NavController,
-    private navParams:NavParams,
-    private fb:FormBuilder,
-    private loadingCtrl:LoadingController,
-    private userProvider:UserProvider){}
+  constructor(public alertCtrl:AlertController,
+              public loadingCtrl:LoadingController,
+              public navCtrl:NavController,
+              public navParams:NavParams,
+              public fb:FormBuilder,
+              private userProvider:UserProvider){}
 
   signupForm = this.fb.group({
     name: ['', Validators.compose([Validators.pattern('[A-Za-zÀ-ÿ].* [A-Za-zÀ-ÿ].*'), Validators.minLength(2), Validators.required])],
@@ -48,6 +48,13 @@ export class SignupPage {
         loading.dismiss();
         if (e._body == "emailAlreadyTaken"){
           this.signupForm.controls['email'].setErrors({'alreadyTaken':true});
+        } else {
+          let alert = this.alertCtrl.create({
+            title: 'Erro',
+            subTitle: 'Não foi possível conectar-se ao servidor. Verifique sua conexão e tente novamente.',
+            buttons: ['Ok']
+          });
+          alert.present();
         }
       });   
     }

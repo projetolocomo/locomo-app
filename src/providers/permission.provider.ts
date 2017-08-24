@@ -29,11 +29,19 @@ export class PermissionProvider {
   //   );
   // };
 
-  // requestFineLocationPermission():any{
-  //   this.androidPermissions.requestPermission(this.androidPermissions.PERMISSION.ACCESS_FINE_LOCATION).then(
-  //     success => { return true },
-  //     err => { return false }
-  //   );
-  // };
+  requestLocationAuthorization():any{
+    let confirm = this.alertCtrl.create({
+      message: "Para utilizar o mapa, precisamos de permissão para acessar ao GPS. Conceda-a a seguir.",
+      buttons: [
+        {
+          text: 'OK',
+          handler: () => {
+            this.diagnostic.requestRuntimePermission(this.diagnostic.permission.ACCESS_FINE_LOCATION);          
+          }
+        }
+      ]
+    });
+    confirm.present();
+  };
 
 }

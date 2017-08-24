@@ -111,6 +111,31 @@ ion-label {
   text-align: center;
 }
 
+.loading-audio {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  text-align: center;
+  width: 100%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9em;
+  z-index: 100;
+}
+
+.loading-audio > ion-spinner {
+  margin: 1em;
+  width: 20px;
+  height: 20px;
+}
+
+.loading-audio > ion-spinner * {
+  stroke: #fff;
+  // fill: #fff;
+}
+
 .time-counter {
   font-size: 1.1em;
   color: #fff;
@@ -157,12 +182,58 @@ ion-label {
   box-shadow: none !important;
 }
 
+.add-marker-button {
+  position: absolute;
+  text-align: center;
+  bottom: 20px;
+  width: 100%;
+  z-index: 20;
+}
+
+.take-picture-title .item-inner {
+  border-bottom: none !important;
+  color: #999 !important;
+}
+
+.image-thumbnail-container {
+  display: flex;
+  /* align-items: center; */
+  justify-content: center;
+  color: #999;
+  padding: 50px;
+  border-bottom: 2px solid rgba(81, 37, 173, 0.1);
+}
+
+.take-picture {
+  text-align: center;
+}
+
+.take-picture > ion-icon {
+  font-size: 3em;
+}
+
+.delete-picture-control {
+  font-size: 3em;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  background: map-get($colors, background);
+  height: 49px;
+  width: 49px;
+  padding: 0px 5px 0 4px;
+  border-radius: 50%;
+}
+
 .grid, .col {
   padding: 0;
 }
 
-.row {
+.row, .took-picture {
   position: relative;
+}
+
+.item-md {
+  padding-left: 0;
 }
 
 //.list-md .item-input:last-child {
@@ -244,8 +315,39 @@ ion-footer {
 
 .scroll-content {
   padding-top: 0 !important;
+  background: map-get($colors, background);
 }
 
-.toolbar-background-md {
-  background: #fff;
+.toolbar-background-md, .input-wrapper, ion-footer  {
+  background: map-get($colors, background);
+}
+
+// these settings make the inputs white and with the top borders rounded
+ion-label {
+  margin-bottom: 10px !important;
+}
+
+.item-label-stacked .item-inner {
+  padding-right: 0 !important;
+}
+
+ion-input, ion-textarea {
+  padding: 0 5px !important;
+  background: #ffffff !important;
+  border-top-left-radius: 5px !important;
+  border-top-right-radius: 5px !important;
+}
+
+ion-textarea {
+  height: 50px;
+}
+
+.image-thumbnail-container {
+  background: #FAFAFA !important;
+  border-top-left-radius: 5px !important;
+  border-top-right-radius: 5px !important;
+}
+
+.no-padding {
+  padding: 0;
 }
