@@ -43,6 +43,9 @@ export class ManageMarkerPage {
     } else {
       this.pageTitle = 'CRIAR NOVA MARCAÇÃO';
     }
+    this.coords = JSON.parse(sessionStorage.getItem('coords'));
+    this.currentMapId = JSON.parse(sessionStorage.getItem('currentMapId'));
+    sessionStorage.removeItem('coords');
   }
 
   ionViewDidLoad():void{
@@ -76,22 +79,25 @@ export class ManageMarkerPage {
   private timerSubscription:Subscription;
   private markerAudioDescription:MediaObject;
   private currentAudioName:string;
+  private currentMapId:string;
   private isPlayingAudio:boolean = false;
   private audioDuration:number;
   private markerFormSubmitted:boolean = false;
   private editMode:boolean = false;
-  private mapToEdit:any;
+  // private mapToEdit:any;
   private previousRecordedAudioInfo:any;
   private isAudioLoaded:boolean = false;
   private isPictureTook:boolean = false;
   private pictureUri:string = null;
+  private coords:any;
   private alert:Alert;
   private loading:Loading;
   private toast:Toast;
 
   newMarkerForm = this.fb.group({
     name: ['', Validators.required],
-    textualDescription: ['']
+    textualDescription: [''],
+    notFirstAttempt: [false]
   });
 
   dismissLoading(){
@@ -235,12 +241,18 @@ export class ManageMarkerPage {
           content: 'Criando marcação...'
         });
         this.loading.present().then(() => {
-          this.markerProvider.newMarker(this.newMarkerForm.value, this.currentAudioName, this.audioDuration, this.pictureUri).then((response) => {
+          this.markerProvider.newMarker(this.currentMapId, this.newMarkerForm.value, this.coords, this.currentAudioName, this.audioDuration, this.pictureUri).then((response) => {
             this.dismissLoading();
-            sessionStorage.setItem('currentMapId', response._id);
-            this.navCtrl.setRoot(MapMainPage);
+            let toast = this.toastCtrl.create({
+              message: 'Marcador salvo',
+              duration: 3000
+            });
+            toast.present();
+            this.navCtrl.pop();
           },
           (e) => {
+            console.log(e);
+            this.newMarkerForm.controls['notFirstAttempt'].setValue(true);
             this.dismissLoading();
             this.alert = this.alertCtrl.create({
               title: 'Erro',
@@ -392,45 +404,45 @@ export class ManageMarkerPage {
         this.navCtrl.pop();
       }
     } else {
-      if (this.currentAudioName || this.newMarkerForm.controls['name'].value !== this.mapToEdit.name || this.newMarkerForm.controls['textualDescription'].value !== this.mapToEdit.textualDescription){
-        let alert = this.alertCtrl.create({
-          message: 'Deseja sair sem salvar?',
-          buttons: [
-            {
-              text: 'Sair',
-              handler: () => {
-                if (this.isAudioLoaded){
-                  if (this.previousRecordedAudioInfo.isDownloaded){
-                    this.fileProvider.moveUploadedFileToCache(this.previousRecordedAudioInfo);
-                    this.navCtrl.pop();
-                  }
-                  // this.removeRecording();
-                } else {
-                  this.navCtrl.pop();
-                }
-              }
-            },
-            {
-              text: 'Cancelar'
-            }          
-          ]
-        });
-        alert.present();
-      } else {
-        if (this.isAudioLoaded){
-          if (this.previousRecordedAudioInfo.isDownloaded){
-            this.fileProvider.moveUploadedFileToCache(this.previousRecordedAudioInfo);
-            this.navCtrl.pop();
-          } else {
-            this.removeRecording();
-            this.navCtrl.pop();
-          }
-        } if (this.isAudioRecorded){
-          this.removeRecording();
-        } else {
-          this.navCtrl.pop();
-        }
-      }
+      // if (this.currentAudioName || this.newMarkerForm.controls['name'].value !== this.markerToEdit.name || this.newMarkerForm.controls['textualDescription'].value !== this.mapToEdit.textualDescription){
+      //   let alert = this.alertCtrl.create({
+      //     message: 'Deseja sair sem salvar?',
+      //     buttons: [
+      //       {
+      //         text: 'Sair',
+      //         handler: () => {
+      //           if (this.isAudioLoaded){
+      //             if (this.previousRecordedAudioInfo.isDownloaded){
+      //               this.fileProvider.moveUploadedFileToCache(this.previousRecordedAudioInfo);
+      //               this.navCtrl.pop();
+      //             }
+      //             // this.removeRecording();
+      //           } else {
+      //             this.navCtrl.pop();
+      //           }
+      //         }
+      //       },
+      //       {
+      //         text: 'Cancelar'
+      //       }          
+      //     ]
+      //   });
+      //   alert.present();
+      // } else {
+      //   if (this.isAudioLoaded){
+      //     if (this.previousRecordedAudioInfo.isDownloaded){
+      //       this.fileProvider.moveUploadedFileToCache(this.previousRecordedAudioInfo);
+      //       this.navCtrl.pop();
+      //     } else {
+      //       this.removeRecording();
+      //       this.navCtrl.pop();
+      //     }
+      //   } if (this.isAudioRecorded){
+      //     this.removeRecording();
+      //   } else {
+      //     this.navCtrl.pop();
+      //   }
+      // }
     }
   }
 

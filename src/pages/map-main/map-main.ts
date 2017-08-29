@@ -4,6 +4,7 @@ import { Diagnostic } from '@ionic-native/diagnostic';
 import { Geolocation } from '@ionic-native/geolocation';
 import { GoogleMaps, GoogleMap, GoogleMapsEvent, LatLng, CameraPosition, MarkerOptions, Marker } from '@ionic-native/google-maps';
 
+import { MarkerProvider } from '../../providers/marker.provider';
 import { PermissionProvider } from '../../providers/permission.provider';
 
 import { HomePage } from '../home/home';
@@ -24,6 +25,7 @@ export class MapMainPage {
               private googleMaps:GoogleMaps,
               private loadingCtrl:LoadingController,
               private platform:Platform,
+              private markerProvider:MarkerProvider,
               private permissionProvider:PermissionProvider){}
 
   ionViewCanEnter():any{
@@ -36,24 +38,31 @@ export class MapMainPage {
   }
 
   ionViewDidEnter():any{
-    sessionStorage.removeItem('currentMapId');
     let element:HTMLElement = document.getElementById('map');
     this.map = this.googleMaps.create(element);
-    this.loadMap();
-    this.checkLocationAuth();
     this.platform.registerBackButtonAction((e:UIEvent) => {
       this.navCtrl.setRoot(HomePage);
     });
     // this.navbar.backButtonClick = (e:UIEvent) => {
     //   this.navCtrl.setRoot(HomePage);
     // }
-    
+    this.stopWatchingLocation = false;
+    this.markerProvider.buildUrls();
+    this.checkLocationAuth();
   }
 
   ionViewDidLoad():void{
     // this.platform.registerBackButtonAction((e:UIEvent) => {
     //   return true;
     // });
+    this.platform.ready().then(() => {
+      this.platform.pause.subscribe(() => {
+        console.log('pausing...');
+      });
+      this.platform.resume.subscribe(() => {
+        this.checkLocationAuth();
+      });
+    });
   }
 
   ionViewDidLeave():void{
@@ -65,6 +74,10 @@ export class MapMainPage {
     this.platform.registerBackButtonAction((e:UIEvent) => {
       return true;
     });
+    this.platform.pause.unsubscribe();
+    this.platform.resume.unsubscribe();
+    this.stopWatchingLocation = true;
+
   }
 
   private currentMapId:string;
@@ -75,8 +88,11 @@ export class MapMainPage {
   private currentPosition:any = {};
   private map:GoogleMap;
   private watchLocation = this.geolocation.watchPosition({enableHighAccuracy:true});
+  private markers:any = {};
+  private stopWatchingLocation:boolean;
 
   checkLocationAuth(){
+    console.log('checking location auth...');
     let success = (authorized) => {
       if (authorized){
         try {
@@ -103,13 +119,18 @@ export class MapMainPage {
       this.alert.present();
       console.error(e);
     }
+    this.map.one(GoogleMapsEvent.MAP_READY).then(() => {
+      this.map.setClickable(false);
+    });
     this.diagnostic.isLocationAuthorized().then(success).catch(error);
   }
 
   checkGpsStatus(){
+    console.log('checking gps status...')
     let success = (enabled) => {
       if (enabled){
         console.log('Location is fine.');
+          this.loadMap();
       } else {
         let confirm = this.alertCtrl.create({
           message: 'Sua localização por GPS parece estar desativada. Vamos ativá-la a seguir.',
@@ -128,17 +149,24 @@ export class MapMainPage {
     let error = (e) => {
       console.error(e);
     }
+    this.map.one(GoogleMapsEvent.MAP_READY).then(() => {
+      this.map.setClickable(false);
+    });
     this.diagnostic.isGpsLocationEnabled().then(success).catch(error);
   }
 
   loadMap(){
     console.log('loading map...');
-    this.map.one(GoogleMapsEvent.MAP_READY).then(() => {
+    this.map.setClickable(true);
+    // this.map.one(GoogleMapsEvent.MAP_READY).then(() => {
       console.log('Map is ready!');
       this.loading = this.loadingCtrl.create({
         content: 'Obtendo seu local...'
       });
       this.loading.present();
+      this.markerProvider.getMarkers(this.currentMapId).then((markersData) => {
+        this.markers = markersData;
+      });
       let initLocation = this.watchLocation.subscribe((data) => {
         console.log('accuracy of location obtained: ', data.coords.accuracy);
         if (data.coords.accuracy < 30){
@@ -150,32 +178,48 @@ export class MapMainPage {
            zoom: 18,
            duration: 3000
           }).then(() => {
+            
             initLocation.unsubscribe();
           });
         }
       });
-    });
-	
+    // })
   // tilt: 60,
-  // bearing: 140,
-    
-  // // create new marker
-  // let markerOptions: MarkerOptions = {
-  //  position: ionic,
-  //  title: 'Ionic'
-  // };
-
-  // const marker: Marker = map.addMarker(markerOptions)
-  //  .then((marker: Marker) => {
-  //     marker.showInfoWindow();
-  //   });
+  // bearing: 140
   }
 
   startWatchingLocation(currentLat, currentLng){
-    console.log('start watching location...')
+    console.log('start watching location...');
     this.currentPosition.lat = currentLat;
     this.currentPosition.lng = currentLng;
     let centerMarker;
+    const iconImage = {
+      url: './assets/markers/map_pin_icon_fullfilled.png',
+      size: {
+        width: 54,
+        height: 54
+      }
+    }
+    centerMarker = this.map.addMarker({
+      position: this.currentPosition,
+      icon: iconImage,
+      draggable: false,
+      zIndex: 10
+    }).then((marker) => {
+      let watchLocation = this.watchLocation.subscribe((data) => {
+        this.currentPosition.lat = data.coords.latitude;
+        this.currentPosition.lng = data.coords.longitude;
+        marker.setPosition(this.currentPosition);
+        if (this.stopWatchingLocation){
+          marker.remove();
+          watchLocation.unsubscribe();
+        }
+      });
+    });
+    this.buildMarkers();
+  }
+
+  buildMarkers():void{
     const iconImage = {
       url: './assets/markers/map_pin_icon_hole.png',
       size: {
@@ -183,21 +227,23 @@ export class MapMainPage {
         height: 48
       }
     }
-    centerMarker = this.map.addMarker({
-      position: this.currentPosition,
-      icon: iconImage,
-      draggable: false
-    }).then((marker) => {
-      let watchLocation = this.watchLocation.subscribe((data) => {
-        this.currentPosition.lat = data.coords.latitude;
-        this.currentPosition.lng = data.coords.longitude;
-        marker.setPosition(this.currentPosition);
+    for (let i in this.markers){
+      let lat = this.markers[i].geometry.coordinates[0];
+      let lng = this.markers[i].geometry.coordinates[1];
+      let position = {
+        lat:lat,
+        lng:lng
+      };
+      let marker = this.map.addMarker({
+        position: position,
+        icon: iconImage
       });
-    });
+    };
   }
 
-  newMarker(){
+  newMarker():void{
     console.log('opening add marker screen with position ', this.currentPosition);
+    sessionStorage.setItem('coords', JSON.stringify(this.currentPosition));
     this.navCtrl.push(ManageMarkerPage);
   }
 

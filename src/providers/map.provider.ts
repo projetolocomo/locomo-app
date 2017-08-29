@@ -18,6 +18,7 @@ export class MapProvider {
   }
 
   private serverUrl:string = 'http://192.168.1.58:3000/api/';
+  // private serverUrl:string = 'http://locomo.eu-4.evennode.com/api/';
   private userData:any = {id:null, token:null};
   private mapManagementUrl:string;
   private uploadUrl:string;
@@ -37,7 +38,7 @@ export class MapProvider {
 
   retrieveUserMaps(){
     this.buildUrls();
-    console.log('retrieving user maps from url ' + this.serverUrl + this.userData.id + '/maps');
+    console.log('retrieving user maps from url ' + this.serverUrl + this.userData.id + '/maps/?token=' + this.userData.token);
     return this.http.get(this.serverUrl + this.userData.id + '/maps', {params:{'token':this.userData.token}})
                     .map((response:Response) => {
                       return response.json();
@@ -150,12 +151,18 @@ export class MapProvider {
     }
   };
 
+  //change POST to DELETE and let the server look for the voiceDescriptionId associated to the map (if there is some) and remove the appropriate file
   removeMap(mapData){
     let mapRemovalUrl = this.serverUrl + this.userData.id + '/maps/' + '?token=' + this.userData.token;
     let requestOptions = new RequestOptions({ body:mapData });
     return this.http.delete(mapRemovalUrl, requestOptions).map((response:Response) => {
-      return response.json();
+      if (requestOptions.body.voiceDescription){
+        let voiceDescriptionId = requestOptions.body.voiceDescription;
+        this.fileProvider.removeFileFromCache('audio', voiceDescriptionId);
+        this.fileProvider.removeTempAudioRecording(voiceDescriptionId + '.mp3');
+      };
       // return this.fileProvider.removeMap(mapData);
+      return response.json();
     }).catch((error:Response) => {
       return Observable.throw(error);
     }).toPromise();
