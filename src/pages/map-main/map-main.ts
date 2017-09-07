@@ -2,13 +2,14 @@ import { Component, ViewChild } from '@angular/core';
 import { AlertController, LoadingController, Navbar, NavController, Platform } from 'ionic-angular';
 import { Diagnostic } from '@ionic-native/diagnostic';
 import { Geolocation } from '@ionic-native/geolocation';
-import { GoogleMaps, GoogleMap, GoogleMapsEvent, LatLng, CameraPosition, MarkerOptions, Marker } from '@ionic-native/google-maps';
 
 import { MarkerProvider } from '../../providers/marker.provider';
 import { PermissionProvider } from '../../providers/permission.provider';
 
 import { HomePage } from '../home/home';
 import { ManageMarkerPage } from '../manage-marker/manage-marker';
+
+declare var plugin:any;
 
 @Component({
   selector: 'map-main',
@@ -22,7 +23,6 @@ export class MapMainPage {
               private navCtrl:NavController,
               private diagnostic:Diagnostic,
               private geolocation:Geolocation,
-              private googleMaps:GoogleMaps,
               private loadingCtrl:LoadingController,
               private platform:Platform,
               private markerProvider:MarkerProvider,
@@ -39,7 +39,14 @@ export class MapMainPage {
 
   ionViewDidEnter():any{
     let element:HTMLElement = document.getElementById('map');
-    this.map = this.googleMaps.create(element);
+    // this.map = this.googleMaps.create(element);
+    let mapDiv = document.getElementById('map');
+    this.map = plugin.google.maps.Map.getMap(mapDiv);
+    // this.map.setOptions({
+    //   'controls': {
+    //     'myLocationButton': true
+    //   }
+    // });
     this.platform.registerBackButtonAction((e:UIEvent) => {
       this.navCtrl.setRoot(HomePage);
     });
@@ -56,10 +63,12 @@ export class MapMainPage {
     //   return true;
     // });
     this.platform.ready().then(() => {
-      this.platform.pause.subscribe(() => {
+      this.pause = this.platform.pause.subscribe(() => {
         console.log('pausing...');
+        this.stopWatchingLocation = true;
       });
-      this.platform.resume.subscribe(() => {
+      this.resume = this.platform.resume.subscribe(() => {
+        this.stopWatchingLocation = false;
         this.checkLocationAuth();
       });
     });
@@ -74,22 +83,27 @@ export class MapMainPage {
     this.platform.registerBackButtonAction((e:UIEvent) => {
       return true;
     });
-    this.platform.pause.unsubscribe();
-    this.platform.resume.unsubscribe();
     this.stopWatchingLocation = true;
-
+    this.pause.unsubscribe();
+    this.resume.unsubscribe();
   }
 
   private currentMapId:string;
   private alert;
   private loading;
-  // private currentLocationMarker;
   private isLocationAcquired:boolean = false;
+  private isMapCentered:boolean = true;
   private currentPosition:any = {};
-  private map:GoogleMap;
+  private cameraPosition:any = {};
+  private map;
   private watchLocation = this.geolocation.watchPosition({enableHighAccuracy:true});
   private markers:any = {};
+  private resume;
+  private pause;
   private stopWatchingLocation:boolean;
+  private cameraMoveStart;
+  private cameraMoveEnd;
+  private cameraMove;
 
   checkLocationAuth(){
     console.log('checking location auth...');
@@ -119,19 +133,19 @@ export class MapMainPage {
       this.alert.present();
       console.error(e);
     }
-    this.map.one(GoogleMapsEvent.MAP_READY).then(() => {
-      this.map.setClickable(false);
-    });
     this.diagnostic.isLocationAuthorized().then(success).catch(error);
   }
 
   checkGpsStatus(){
-    console.log('checking gps status...')
+    console.log('checking gps status...');
     let success = (enabled) => {
       if (enabled){
         console.log('Location is fine.');
-          this.loadMap();
+        this.loadMap();
       } else {
+        this.map.on(plugin.google.maps.event.MAP_READY, function(map) {
+          map.setClickable(false);
+        });
         let confirm = this.alertCtrl.create({
           message: 'Sua localização por GPS parece estar desativada. Vamos ativá-la a seguir.',
           buttons: [
@@ -149,73 +163,95 @@ export class MapMainPage {
     let error = (e) => {
       console.error(e);
     }
-    this.map.one(GoogleMapsEvent.MAP_READY).then(() => {
-      this.map.setClickable(false);
-    });
     this.diagnostic.isGpsLocationEnabled().then(success).catch(error);
   }
 
   loadMap(){
     console.log('loading map...');
+    this.map.on(plugin.google.maps.event.MAP_READY, function(map) {
+      console.log('ready');
+      map.setClickable(true);
+    });
     this.map.setClickable(true);
-    // this.map.one(GoogleMapsEvent.MAP_READY).then(() => {
-      console.log('Map is ready!');
-      this.loading = this.loadingCtrl.create({
-        content: 'Obtendo seu local...'
-      });
-      this.loading.present();
-      this.markerProvider.getMarkers(this.currentMapId).then((markersData) => {
-        this.markers = markersData;
-      });
-      let initLocation = this.watchLocation.subscribe((data) => {
-        console.log('accuracy of location obtained: ', data.coords.accuracy);
-        if (data.coords.accuracy < 30){
-          this.isLocationAcquired = true;
-          this.loading.dismiss(); 
-          this.startWatchingLocation(data.coords.latitude, data.coords.longitude);
-          this.map.animateCamera({
-           target: {lat:data.coords.latitude, lng:data.coords.longitude},
-           zoom: 18,
-           duration: 3000
-          }).then(() => {
-            
-            initLocation.unsubscribe();
-          });
-        }
-      });
-    // })
-  // tilt: 60,
-  // bearing: 140
+    console.log('Map is ready!');
+    this.loading = this.loadingCtrl.create({
+      content: 'Obtendo seu local...'
+    });
+    this.loading.present();
+    this.markerProvider.getMarkers(this.currentMapId).then((markersData) => {
+      this.markers = markersData;
+    });
+    let initLocation = this.watchLocation.subscribe((data) => {
+      console.log('accuracy of location obtained: ', data.coords.accuracy);
+      if (data.coords.accuracy < 30){
+        this.isLocationAcquired = true;
+        this.loading.dismiss(); 
+        // this.startWatchingLocation(data.coords.latitude, data.coords.longitude);
+        this.startWatchingLocation();
+        this.map.animateCamera({
+         target: {lat:data.coords.latitude, lng:data.coords.longitude},
+         zoom: 18,
+         duration: 3000
+        }, function() {
+          initLocation.unsubscribe();
+        });
+      }
+    });
+    this.map.on(plugin.google.maps.event.CAMERA_MOVE_START, this.setMapCenteredFalse);
+    this.map.on(plugin.google.maps.event.CAMERA_MOVE_END, function(cameraEvent){
+      sessionStorage.setItem('cameraTarget', JSON.stringify(cameraEvent.target));
+    });
   }
 
-  startWatchingLocation(currentLat, currentLng){
+  setMapCenteredFalse(){
+    this.isMapCentered = false;
+  }
+
+  setMapCenteredTrue(){
+      this.isMapCentered = true;
+  }
+
+  editMarker(){
+    console.log('editing marker');
+  }
+
+  // startWatchingLocation(currentLat, currentLng){
+  startWatchingLocation(){
     console.log('start watching location...');
-    this.currentPosition.lat = currentLat;
-    this.currentPosition.lng = currentLng;
-    let centerMarker;
-    const iconImage = {
-      url: './assets/markers/map_pin_icon_fullfilled.png',
-      size: {
-        width: 54,
-        height: 54
-      }
-    }
-    centerMarker = this.map.addMarker({
-      position: this.currentPosition,
-      icon: iconImage,
-      draggable: false,
-      zIndex: 10
-    }).then((marker) => {
+    // this.currentPosition.lat = currentLat;
+    // this.currentPosition.lng = currentLng;
+    // let centerMarker;
+    // const iconImage = {
+    //   url: './assets/markers/map_pin_icon_fullfilled.png',
+    //   size: {
+    //     width: 54,
+    //     height: 54
+    //   }
+    // }
+    // centerMarker = this.map.addMarker({
+    //   position: this.currentPosition,
+    //   icon: iconImage,
+    //   draggable: false,
+    //   zIndex: 10
+    // })
+    // .then((marker) => {
       let watchLocation = this.watchLocation.subscribe((data) => {
+        // console.log(this.isMapCentered)
+        // if (this.isMapCentered){
+        //   this.map.animateCamera({
+        //     target: {lat:data.coords.latitude, lng:data.coords.longitude},
+        //     duration: 500
+        //   });
+        // }
         this.currentPosition.lat = data.coords.latitude;
         this.currentPosition.lng = data.coords.longitude;
-        marker.setPosition(this.currentPosition);
+        // marker.setPosition(this.currentPosition);
         if (this.stopWatchingLocation){
-          marker.remove();
+          // marker.remove();
           watchLocation.unsubscribe();
         }
       });
-    });
+    // });
     this.buildMarkers();
   }
 
@@ -238,13 +274,43 @@ export class MapMainPage {
         position: position,
         icon: iconImage
       });
+      marker.setDisableAutoPan(true);
+      marker.on(plugin.google.maps.event.MARKER_CLICK, function() {
+        console.log('a')
+        marker.showInfoWindow();
+      });
     };
   }
 
   newMarker():void{
-    console.log('opening add marker screen with position ', this.currentPosition);
-    sessionStorage.setItem('coords', JSON.stringify(this.currentPosition));
+    this.cameraPosition = JSON.parse(sessionStorage.getItem('cameraTarget'));
+    console.log('opening add marker screen with camera position ', this.cameraPosition);
     this.navCtrl.push(ManageMarkerPage);
   }
+
+  centerMap(){
+    console.log('centering map...');
+    this.map.animateCamera({
+     target: this.currentPosition,
+     zoom: 18,
+     duration: 1500
+    }, this.setMapCenteredTrue);
+  }
+
+  // getNewLocation(){
+  //   console.log('new location')
+  //   this.map.getCameraTarget().then((ct) => {
+  //     console.log('cameratarget', ct)
+  //   })
+  //   this.cameraMove = this.map.on(GoogleMapsEvent.CAMERA_MOVE).subscribe((move) => {
+  //     console.log('move', move)
+  //   })
+  //   this.cameraMoveStart = this.map.on(GoogleMapsEvent.CAMERA_MOVE_START).subscribe((move) => {
+  //     console.log('start', move)
+  //   })
+  //   this.cameraMoveEnd = this.map.on(GoogleMapsEvent.CAMERA_MOVE_END).subscribe((move) => {
+  //     console.log('end', move)
+  //   })
+  // }
 
 }

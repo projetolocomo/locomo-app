@@ -43,9 +43,8 @@ export class ManageMarkerPage {
     } else {
       this.pageTitle = 'CRIAR NOVA MARCAÇÃO';
     }
-    this.coords = JSON.parse(sessionStorage.getItem('coords'));
+    this.coords = JSON.parse(sessionStorage.getItem('cameraTarget'));
     this.currentMapId = JSON.parse(sessionStorage.getItem('currentMapId'));
-    sessionStorage.removeItem('coords');
   }
 
   ionViewDidLoad():void{

@@ -8,7 +8,6 @@ import { Media, MediaObject } from '@ionic-native/media';
 import { File } from '@ionic-native/file';
 import { FileTransfer } from '@ionic-native/file-transfer';
 import { Diagnostic } from '@ionic-native/diagnostic';
-import { GoogleMaps } from '@ionic-native/google-maps';
 import { Geolocation } from '@ionic-native/geolocation';
 import { Network } from '@ionic-native/network';
 import { Camera } from '@ionic-native/camera';
@@ -64,7 +63,6 @@ import { ManageMarkerPage } from '../pages/manage-marker/manage-marker';
     Media,
     File,
     FileTransfer,
-    GoogleMaps,
     Geolocation,
     Network,
     Diagnostic,
