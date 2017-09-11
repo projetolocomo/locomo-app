@@ -48,11 +48,15 @@
         <ion-label stacked>Foto</ion-label>
       </ion-item>
       <!-- padding is removed when there is a picture inside it -->
-      <div class="image-thumbnail-container" [class.no-padding]="isPictureTook" (click)="takePicture()">
+      <div class="image-thumbnail-container" [class.no-padding]="isPictureTook">
         <!-- shown when the picture was not took yet -->
-        <div class="take-picture" *ngIf="!isPictureTook">
+        <div class="picture-camera" *ngIf="!isPictureTook" (click)="takePicture()">
           <ion-icon name="camera"></ion-icon>
           <p>Tirar foto</p>
+        </div>
+        <div class="picture-gallery" *ngIf="!isPictureTook" (click)="selectPictureFromGallery()">
+          <ion-icon name="image"></ion-icon>
+          <p>Escolher da galeria</p>
         </div>
         <!-- shown when the picture is already took -->
         <div class="took-picture">

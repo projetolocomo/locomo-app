@@ -200,19 +200,32 @@ ion-label {
   /* align-items: center; */
   justify-content: center;
   color: #999;
-  padding: 50px;
+  padding: 40px;
   border-bottom: 2px solid rgba(81, 37, 173, 0.1);
   background: #ffffff !important;
   border-top-left-radius: 5px !important;
   border-top-right-radius: 5px !important;
+  min-height: 170px;
 }
 
-.take-picture {
+.picture-camera, .picture-gallery {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  position: absolute;
   text-align: center;
 }
 
-.take-picture > ion-icon {
+.picture-camera ion-icon, .picture-gallery ion-icon {
   font-size: 3em;
+}
+
+.picture-camera {
+  left: 20%;
+}
+
+.picture-gallery {
+  right: 20%;
 }
 
 .delete-picture-control {
@@ -375,4 +388,8 @@ ion-textarea {
 .center-map ion-icon {
   font-size: 2.5em;
   color: white;
+}
+
+#map {
+  z-index: 20;
 }

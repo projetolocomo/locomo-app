@@ -8,7 +8,7 @@ import 'rxjs/add/operator/map';
 export class UserProvider {
   constructor(public http:Http){}
 
-  private serverUrl:string = "http://192.168.1.58:3000/api/";
+  private serverUrl:string = 'http://192.168.137.1:3000/api/';  
   // private serverUrl:string = 'http://locomo.eu-4.evennode.com/api/';
 
   login(loginData:any):any{

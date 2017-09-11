@@ -17,13 +17,22 @@ export class MapProvider {
     this.buildUrls();
   }
 
-  private serverUrl:string = 'http://192.168.1.58:3000/api/';
+  private serverUrl:string = 'http://192.168.137.1:3000/api/';
   // private serverUrl:string = 'http://locomo.eu-4.evennode.com/api/';
   private userData:any = {id:null, token:null};
   private mapManagementUrl:string;
   private uploadUrl:string;
 //   private downloadUrl = this.serverUrl + this.userData.id + '/files/598b65362f55060fa0518a49?token=' + this.userData.token
   private rootPath:string = this.file.externalRootDirectory;
+  private currentMapId:any;
+
+  setCurrentMapId(mapId):void{
+    this.currentMapId = mapId;
+  }
+
+  getCurrentMapId():any{
+    return this.currentMapId;
+  }
 
   buildUrls(){
     if (localStorage.getItem('authData')){

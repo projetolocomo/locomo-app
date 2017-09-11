@@ -86,7 +86,7 @@ export class HomePage {
   }
 
   openMap(map){
-    sessionStorage.setItem('currentMapId', map._id);
+    this.mapProvider.setCurrentMapId(map._id);
     this.navCtrl.setRoot(MapMainPage);
   }
 

@@ -43,7 +43,7 @@ export class ManageMarkerPage {
     } else {
       this.pageTitle = 'CRIAR NOVA MARCAÇÃO';
     }
-    this.coords = JSON.parse(sessionStorage.getItem('cameraTarget'));
+    this.coords = this.markerProvider.getNewMarkerLocation();
     this.currentMapId = JSON.parse(sessionStorage.getItem('currentMapId'));
   }
 
@@ -89,6 +89,7 @@ export class ManageMarkerPage {
   private isPictureTook:boolean = false;
   private pictureUri:string = null;
   private coords:any;
+  private isPictureFromGallery:boolean = false;
   private alert:Alert;
   private loading:Loading;
   private toast:Toast;
@@ -240,7 +241,7 @@ export class ManageMarkerPage {
           content: 'Criando marcação...'
         });
         this.loading.present().then(() => {
-          this.markerProvider.newMarker(this.currentMapId, this.newMarkerForm.value, this.coords, this.currentAudioName, this.audioDuration, this.pictureUri).then((response) => {
+          this.markerProvider.newMarker(this.currentMapId, this.newMarkerForm.value, this.coords, this.currentAudioName, this.audioDuration, this.pictureUri, this.isPictureFromGallery).then((response) => {
             this.dismissLoading();
             let toast = this.toastCtrl.create({
               message: 'Marcador salvo',
@@ -289,6 +290,7 @@ export class ManageMarkerPage {
        console.log('image URI: ', imageURI);
        this.isPictureTook = true;
        this.pictureUri = imageURI;
+       this.isPictureFromGallery = false;
        document.getElementById('thumbnail').setAttribute('src', imageURI);
       }, (err) => {
        // Handle error
@@ -298,12 +300,42 @@ export class ManageMarkerPage {
     }
   }
 
+  selectPictureFromGallery(){
+    console.log('called selectPictureFromGallery()');
+    if (!this.isPictureTook && !this.pictureUri){
+      const options:CameraOptions = {
+        sourceType: 0,
+        quality: 70,
+        destinationType: this.camera.DestinationType.FILE_URI,
+        encodingType: this.camera.EncodingType.JPEG,
+        mediaType: this.camera.MediaType.PICTURE,
+        targetHeight: 2048,
+        targetWidth: 2580,
+        correctOrientation: true
+      };
+      this.camera.getPicture(options).then((imageURI) => {
+        console.log('image URI: ', imageURI);
+        this.isPictureTook = true;
+        this.pictureUri = imageURI;
+        this.isPictureFromGallery = true;
+        document.getElementById('thumbnail').setAttribute('src', imageURI);
+      }, (err) => {
+        this.isPictureTook = false;
+        console.log('error on seleting image', err);
+      });
+    }
+  }
+
   removePicture(){
     console.log('removing picture...');
+    if (this.isPictureFromGallery) {
+      this.pictureUri = this.pictureUri.substring(0, this.pictureUri.lastIndexOf('?'));
+    }
     this.fileProvider.removeTempPicture(this.pictureUri);
     this.pictureUri = null;
     document.getElementById('thumbnail').removeAttribute('src');
     this.isPictureTook = false;
+    this.isPictureFromGallery = false;
   }
 
   //IF FILE CONTAINS 'ISDOWNLOADED' PROPERTY, THEN REMOVE!!!

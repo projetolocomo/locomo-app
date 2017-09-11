@@ -7,15 +7,19 @@ import { FileProvider } from './file.provider';
 import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer';
 import 'rxjs/add/observable/fromPromise';
 
+import { MapProvider } from './map.provider';
+
 @Injectable()
 export class MarkerProvider {
   constructor(public http:Http,
               public fileProvider:FileProvider,
+              private mapProvider:MapProvider,
               public platform:Platform,
               public fileTransfer:FileTransfer,
               public file:File){}
 
-  private serverUrl:string = 'http://192.168.1.58:3000/api/';
+  private serverUrl:string = 'http://192.168.137.1:3000/api/';
+  
   // private serverUrl:string = 'http://locomo.eu-4.evennode.com/api/';
   // private downloadUrl = this.serverUrl + this.userData.id + '/files/598b65362f55060fa0518a49?token=' + this.userData.token;
   // private mapManagementUrl:string;
@@ -25,10 +29,11 @@ export class MarkerProvider {
   private markerManagementUrl:string;
   private rootPath:string = this.file.externalRootDirectory;
   private currentMapId:string;
+  private newMarkerLocation:any;
 
   buildUrls(){
-    if (sessionStorage.getItem('currentMapId')){
-      this.currentMapId = sessionStorage.getItem('currentMapId');
+    if (this.mapProvider.getCurrentMapId()){
+      this.currentMapId = this.mapProvider.getCurrentMapId();
       console.log('building urls for map', this.currentMapId);
       this.userData = JSON.parse(localStorage.getItem('authData'));
       this.markerManagementUrl = this.serverUrl + this.userData.id + '/' + this.currentMapId + '/markers?token=' + this.userData.token;
@@ -74,6 +79,14 @@ export class MarkerProvider {
   //   });
   // }
 
+  setNewMarkerLocation(location):void{
+    this.newMarkerLocation = location;
+  }
+
+  getNewMarkerLocation():any{
+    return this.newMarkerLocation;
+  }
+
   getMarkers(mapId){
     return this.http.get(this.markerManagementUrl).map((response:Response) => {
       console.log('getting markers from ' + this.markerManagementUrl);
@@ -83,21 +96,23 @@ export class MarkerProvider {
     }).toPromise();
   }
 
-  newMarker(mapId, markerData, coords, audioRecordingName, audioDuration, pictureUri){
+  newMarker(mapId, markerData, coords, audioRecordingName, audioDuration, pictureUri, isPictureFromGallery){
     if (audioRecordingName && !pictureUri){
       console.log('only audio');
       return this.uploadFile(this.rootPath, audioRecordingName, 'audio/mp3', audioDuration).then((response:string) => {
         let audioUploadResponse = JSON.parse(response);
-        this.fileProvider.moveUploadedFileToCache(audioUploadResponse);
         let geoJsonMarkerData = this.generateGeoJson(mapId, markerData, coords, audioUploadResponse._id, null);
         return this.sendMarker(geoJsonMarkerData);
       });
     } else if (!audioRecordingName && pictureUri){
       console.log('only picture');
       let fileName = pictureUri.substring(pictureUri.lastIndexOf('/') + 1);
+      if (isPictureFromGallery){
+        fileName = fileName.substring(0, fileName.lastIndexOf('?'));
+      };
       return this.uploadFile(pictureUri,  fileName, 'image/jpeg', undefined).then((response:string) => {
         let pictureUploadResponse = JSON.parse(response);
-        this.fileProvider.moveUploadedFileToCache(pictureUploadResponse);
+        this.fileProvider.moveUploadedFileToCache(pictureUploadResponse);        
         let geoJsonMarkerData = this.generateGeoJson(mapId, markerData, coords, undefined, pictureUploadResponse._id);
         return this.sendMarker(geoJsonMarkerData);
       });
@@ -107,11 +122,13 @@ export class MarkerProvider {
       return this.uploadFile(this.rootPath, audioRecordingName, 'audio/mp3', audioDuration).then((response:string) => {
         audioUploadResponse = JSON.parse(response);
         let fileName = pictureUri.substring(pictureUri.lastIndexOf('/') + 1);
+        if (isPictureFromGallery){
+          fileName = fileName.substring(0, fileName.lastIndexOf('?'));
+        };
         return this.uploadFile(pictureUri,  fileName, 'image/jpeg', undefined).then((response:string) => {
           let pictureUploadResponse = JSON.parse(response);
           //moves audio and picture to right folder only with both uploads are ok
           this.fileProvider.moveUploadedFileToCache(audioUploadResponse);
-          this.fileProvider.moveUploadedFileToCache(pictureUploadResponse);
           let geoJsonMarkerData = this.generateGeoJson(mapId, markerData, coords, audioUploadResponse._id, pictureUploadResponse._id);
           return this.sendMarker(geoJsonMarkerData);
         });
@@ -220,6 +237,7 @@ export class MarkerProvider {
 
   sendMarker(markerData){
     console.log('sending marker data: ', markerData);
+    console.log(this.markerManagementUrl)
     return this.http.post(this.markerManagementUrl, markerData).map((response:Response) => {
       console.log('response from server: ', response.json());
       if (markerData.previousVoiceDescription){

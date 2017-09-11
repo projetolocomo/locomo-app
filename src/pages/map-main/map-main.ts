@@ -3,12 +3,14 @@ import { AlertController, LoadingController, Navbar, NavController, Platform } f
 import { Diagnostic } from '@ionic-native/diagnostic';
 import { Geolocation } from '@ionic-native/geolocation';
 
+import { MapProvider } from '../../providers/map.provider';
 import { MarkerProvider } from '../../providers/marker.provider';
 import { PermissionProvider } from '../../providers/permission.provider';
 
 import { HomePage } from '../home/home';
 import { ManageMarkerPage } from '../manage-marker/manage-marker';
 
+// declare var google:any;
 declare var plugin:any;
 
 @Component({
@@ -25,12 +27,13 @@ export class MapMainPage {
               private geolocation:Geolocation,
               private loadingCtrl:LoadingController,
               private platform:Platform,
+              private mapProvider:MapProvider,
               private markerProvider:MarkerProvider,
               private permissionProvider:PermissionProvider){}
 
   ionViewCanEnter():any{
-    if (sessionStorage.getItem('currentMapId')){
-      this.currentMapId = sessionStorage.getItem('currentMapId');
+    if (this.mapProvider.getCurrentMapId()){
+      this.currentMapId = this.mapProvider.getCurrentMapId();
       return true;
     } else {
       this.navCtrl.setRoot(HomePage);
@@ -38,15 +41,8 @@ export class MapMainPage {
   }
 
   ionViewDidEnter():any{
-    let element:HTMLElement = document.getElementById('map');
-    // this.map = this.googleMaps.create(element);
-    let mapDiv = document.getElementById('map');
-    this.map = plugin.google.maps.Map.getMap(mapDiv);
-    // this.map.setOptions({
-    //   'controls': {
-    //     'myLocationButton': true
-    //   }
-    // });
+    let mapElement = document.getElementById('map');
+    this.map = plugin.google.maps.Map.getMap(mapElement);
     this.platform.registerBackButtonAction((e:UIEvent) => {
       this.navCtrl.setRoot(HomePage);
     });
@@ -101,9 +97,9 @@ export class MapMainPage {
   private resume;
   private pause;
   private stopWatchingLocation:boolean;
-  private cameraMoveStart;
-  private cameraMoveEnd;
-  private cameraMove;
+  // private cameraMoveStart;
+  // private cameraMoveEnd;
+  // private cameraMove;
 
   checkLocationAuth(){
     console.log('checking location auth...');
@@ -143,9 +139,9 @@ export class MapMainPage {
         console.log('Location is fine.');
         this.loadMap();
       } else {
-        this.map.on(plugin.google.maps.event.MAP_READY, function(map) {
-          map.setClickable(false);
-        });
+        // this.map.on(plugin.google.maps.event.MAP_READY, function(map) {
+        //   map.setClickable(false);
+        // });
         let confirm = this.alertCtrl.create({
           message: 'Sua localização por GPS parece estar desativada. Vamos ativá-la a seguir.',
           buttons: [
@@ -168,12 +164,12 @@ export class MapMainPage {
 
   loadMap(){
     console.log('loading map...');
-    this.map.on(plugin.google.maps.event.MAP_READY, function(map) {
-      console.log('ready');
-      map.setClickable(true);
-    });
-    this.map.setClickable(true);
-    console.log('Map is ready!');
+    // this.map.on(plugin.google.maps.event.MAP_READY, function(map) {
+    //   console.log('ready');
+    //   map.setClickable(true);
+    // });
+    // this.map.setClickable(true);
+    // console.log('map is ready!');
     this.loading = this.loadingCtrl.create({
       content: 'Obtendo seu local...'
     });
@@ -197,7 +193,7 @@ export class MapMainPage {
         });
       }
     });
-    this.map.on(plugin.google.maps.event.CAMERA_MOVE_START, this.setMapCenteredFalse);
+    // this.map.on(plugin.google.maps.event.CAMERA_MOVE_START, this.setMapCenteredFalse);
     this.map.on(plugin.google.maps.event.CAMERA_MOVE_END, function(cameraEvent){
       sessionStorage.setItem('cameraTarget', JSON.stringify(cameraEvent.target));
     });
@@ -257,7 +253,7 @@ export class MapMainPage {
 
   buildMarkers():void{
     const iconImage = {
-      url: './assets/markers/map_pin_icon_hole.png',
+      url: './assets/markers/map_pin_icon_fullfilled.png',
       size: {
         width: 48,
         height: 48
@@ -273,11 +269,12 @@ export class MapMainPage {
       let marker = this.map.addMarker({
         position: position,
         icon: iconImage
-      });
-      marker.setDisableAutoPan(true);
-      marker.on(plugin.google.maps.event.MARKER_CLICK, function() {
-        console.log('a')
-        marker.showInfoWindow();
+      }, function(marker){
+        marker.setDisableAutoPan(true);
+        marker.on(plugin.google.maps.event.MARKER_CLICK, function() {
+          console.log('marker clicked')
+          marker.showInfoWindow();
+        });
       });
     };
   }
@@ -285,6 +282,7 @@ export class MapMainPage {
   newMarker():void{
     this.cameraPosition = JSON.parse(sessionStorage.getItem('cameraTarget'));
     console.log('opening add marker screen with camera position ', this.cameraPosition);
+    this.markerProvider.setNewMarkerLocation(this.cameraPosition);
     this.navCtrl.push(ManageMarkerPage);
   }
 
