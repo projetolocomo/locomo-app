@@ -28,7 +28,9 @@
           </ion-col>
           <ion-col col-12>
             <div class="audio-recorder" [class.show-recorder]="recordingAudio || isAudioRecorded">
+            <!-- <div class="audio-recorder" *ngIf="recordingAudio || isAudioRecorded" [@fadeInOut]>              -->
               <div class="audio-recorder-controls" [class.fade-in]="recordingAudio || isAudioRecorded && isAudioLoaded">
+              <!-- <div class="audio-recorder-controls" *ngIf="recordingAudio || isAudioRecorded && isAudioLoaded" [@stretchWidth]>                   -->
                 <!-- <ion-icon class="record-control peak-indicator" name="close-circle" *ngIf="recordingAudio"></ion-icon> -->
                 <ion-icon class="record-control play-record" name="play" *ngIf="isAudioRecorded && !isPlayingAudio" (click)="playRecord()"></ion-icon>
                 <ion-icon class="record-control stop-playing" name="square" *ngIf="isPlayingAudio" (click)="stopPlayingRecord()"></ion-icon>

@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ElementRef } from '@angular/core';
 import { AlertController, LoadingController, Navbar, NavController, Platform } from 'ionic-angular';
 import { Diagnostic } from '@ionic-native/diagnostic';
 import { Geolocation } from '@ionic-native/geolocation';
@@ -10,7 +10,6 @@ import { PermissionProvider } from '../../providers/permission.provider';
 import { HomePage } from '../home/home';
 import { ManageMarkerPage } from '../manage-marker/manage-marker';
 
-// declare var google:any;
 declare var plugin:any;
 
 @Component({
@@ -90,16 +89,14 @@ export class MapMainPage {
   private isLocationAcquired:boolean = false;
   private isMapCentered:boolean = true;
   private currentPosition:any = {};
-  private cameraPosition:any = {};
   private map;
   private watchLocation = this.geolocation.watchPosition({enableHighAccuracy:true});
   private markers:any = {};
   private resume;
   private pause;
   private stopWatchingLocation:boolean;
-  // private cameraMoveStart;
-  // private cameraMoveEnd;
-  // private cameraMove;
+  private cameraTarget:any = {};
+  private isMarkerOpened:boolean = false;
 
   checkLocationAuth(){
     console.log('checking location auth...');
@@ -164,12 +161,7 @@ export class MapMainPage {
 
   loadMap(){
     console.log('loading map...');
-    // this.map.on(plugin.google.maps.event.MAP_READY, function(map) {
-    //   console.log('ready');
-    //   map.setClickable(true);
-    // });
     // this.map.setClickable(true);
-    // console.log('map is ready!');
     this.loading = this.loadingCtrl.create({
       content: 'Obtendo seu local...'
     });
@@ -181,7 +173,7 @@ export class MapMainPage {
       console.log('accuracy of location obtained: ', data.coords.accuracy);
       if (data.coords.accuracy < 30){
         this.isLocationAcquired = true;
-        this.loading.dismiss(); 
+        this.loading.dismiss();
         // this.startWatchingLocation(data.coords.latitude, data.coords.longitude);
         this.startWatchingLocation();
         this.map.animateCamera({
@@ -192,10 +184,14 @@ export class MapMainPage {
           initLocation.unsubscribe();
         });
       }
-    });
+    });  
     // this.map.on(plugin.google.maps.event.CAMERA_MOVE_START, this.setMapCenteredFalse);
-    this.map.on(plugin.google.maps.event.CAMERA_MOVE_END, function(cameraEvent){
-      sessionStorage.setItem('cameraTarget', JSON.stringify(cameraEvent.target));
+    this.map.on(plugin.google.maps.event.CAMERA_MOVE_END, (cameraEvent) => {
+      this.cameraTarget = cameraEvent.target;
+    });
+    this.map.on(plugin.google.maps.event.MAP_CLICK, () => {
+      this.markerProvider.setCurrentMarkerToEdit(null);
+      this.isMarkerOpened = false;
     });
   }
 
@@ -258,7 +254,8 @@ export class MapMainPage {
         width: 48,
         height: 48
       }
-    }
+    };
+    // console.log(this.markers[0]);
     for (let i in this.markers){
       let lat = this.markers[i].geometry.coordinates[0];
       let lng = this.markers[i].geometry.coordinates[1];
@@ -266,23 +263,36 @@ export class MapMainPage {
         lat:lat,
         lng:lng
       };
+      let title = this.markers[i].properties.name;
+      let index = i;
+      let infoWindow = new plugin.google.maps.HtmlInfoWindow();
+      let html = `<div>` + title + `</div><img src="./assets/icons/arrow-right.png">`;
+      infoWindow.setContent(html);
       let marker = this.map.addMarker({
         position: position,
-        icon: iconImage
-      }, function(marker){
-        marker.setDisableAutoPan(true);
-        marker.on(plugin.google.maps.event.MARKER_CLICK, function() {
-          console.log('marker clicked')
-          marker.showInfoWindow();
+        icon: iconImage,
+        disableAutoPan: true,
+      }, ((marker) => {
+        marker.on(plugin.google.maps.event.MARKER_CLICK, () => {
+          this.isMarkerOpened = true;
+          infoWindow.open(marker);
+          let markerJSON = this.markers[i];
+          this.markerProvider.setCurrentMarkerToEdit(markerJSON);
         });
-      });
+      }));
+    };
+  }
+
+  enterEditMode(){
+    if (this.isMarkerOpened){
+      this.navCtrl.push(ManageMarkerPage);
     };
   }
 
   newMarker():void{
-    this.cameraPosition = JSON.parse(sessionStorage.getItem('cameraTarget'));
-    console.log('opening add marker screen with camera position ', this.cameraPosition);
-    this.markerProvider.setNewMarkerLocation(this.cameraPosition);
+    console.log('opening add marker screen with camera position ', this.cameraTarget);
+    this.markerProvider.setCurrentMarkerToEdit(null);
+    this.markerProvider.setNewMarkerLocation(this.cameraTarget);
     this.navCtrl.push(ManageMarkerPage);
   }
 
@@ -294,21 +304,5 @@ export class MapMainPage {
      duration: 1500
     }, this.setMapCenteredTrue);
   }
-
-  // getNewLocation(){
-  //   console.log('new location')
-  //   this.map.getCameraTarget().then((ct) => {
-  //     console.log('cameratarget', ct)
-  //   })
-  //   this.cameraMove = this.map.on(GoogleMapsEvent.CAMERA_MOVE).subscribe((move) => {
-  //     console.log('move', move)
-  //   })
-  //   this.cameraMoveStart = this.map.on(GoogleMapsEvent.CAMERA_MOVE_START).subscribe((move) => {
-  //     console.log('start', move)
-  //   })
-  //   this.cameraMoveEnd = this.map.on(GoogleMapsEvent.CAMERA_MOVE_END).subscribe((move) => {
-  //     console.log('end', move)
-  //   })
-  // }
 
 }

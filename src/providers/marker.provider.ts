@@ -30,6 +30,7 @@ export class MarkerProvider {
   private rootPath:string = this.file.externalRootDirectory;
   private currentMapId:string;
   private newMarkerLocation:any;
+  private currentMarkerToEdit:any;
 
   buildUrls(){
     if (this.mapProvider.getCurrentMapId()){
@@ -41,6 +42,15 @@ export class MarkerProvider {
     } else {
       console.log('no map id in sessionStorage');
     }
+  }
+
+  setCurrentMarkerToEdit(marker:any):void{
+    console.log('current marker updated to', marker);
+    this.currentMarkerToEdit = marker;
+  }
+
+  getCurrentMarkerToEdit():any{
+    return this.currentMarkerToEdit;
   }
 
   // retrieveUserMaps(){
@@ -138,7 +148,32 @@ export class MarkerProvider {
       let geoJsonMarkerData = this.generateGeoJson(mapId, markerData, coords, undefined, undefined);
       return this.sendMarker(geoJsonMarkerData);
     }
-  };
+  }
+
+  retrieveAudioContent(audioId){
+    return this.fileProvider.retrieveAudioFileContent(audioId).then(fileContents => {
+      console.log("obtained data from local");
+      return fileContents;
+    }).catch((fileError) => {
+      console.log("data not found locally, obtaining from server");
+      return this.http.get(this.serverUrl + this.userData.id + '/files/' + audioId + '/details', {params:{'token':this.userData.token}})
+                      .map(response => {
+                        console.log(response.json())
+                        let fileDetails = response.json();
+                        let ft = this.fileTransfer.create();
+                        console.log(this.serverUrl + this.userData.id + '/files/' + audioId + '?token=' + this.userData.token)
+                        console.log(this.file.externalRootDirectory + fileDetails._id + '.mp3')
+                        return ft.download(this.serverUrl + this.userData.id + '/files/' + audioId + '?token=' + this.userData.token, this.file.externalRootDirectory + fileDetails._id + '.mp3').then((entry) => {
+                          fileDetails.isDownloaded = true;
+                          return fileDetails;
+                        }, (error) => {
+                          throw new Error(error);                          
+                        });
+                      }).catch(error => {
+                        throw new Error(error);
+                      }).toPromise()
+    });
+  }
 
   generateGeoJson(mapId, markerData, coords, voiceDescriptionId, pictureId):any{
     let geoJsonObject = {
@@ -238,7 +273,7 @@ export class MarkerProvider {
   sendMarker(markerData){
     console.log('sending marker data: ', markerData);
     console.log(this.markerManagementUrl)
-    return this.http.post(this.markerManagementUrl, markerData).map((response:Response) => {
+    return this.http.post(this.markerManagementUrl, markerData).timeout(10000).map((response:Response) => {
       console.log('response from server: ', response.json());
       if (markerData.previousVoiceDescription){
         this.fileProvider.removeFileFromCache('audio', markerData.previousVoiceDescription);

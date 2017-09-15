@@ -1,4 +1,5 @@
 <ion-content>
+  <div class="marker-top-wrapper" (click)="enterEditMode()"></div>
   <div #map id="map" style="height:100%;"></div>
   <div class="center-marker" *ngIf="isLocationAcquired">
     <img src="./assets/markers/map_pin_icon_hole.png">

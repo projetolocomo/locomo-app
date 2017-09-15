@@ -37,14 +37,15 @@ export class ManageMarkerPage {
               private markerProvider:MarkerProvider){}
 
   ionViewDidEnter():void{
-    if (sessionStorage.getItem('mapToEdit')){
+    if (this.markerProvider.getCurrentMarkerToEdit()){
+      console.log('edit')
       this.pageTitle = 'EDITAR MARCAÇÃO';
       this.enterEditMode();
     } else {
+      console.log('create')
       this.pageTitle = 'CRIAR NOVA MARCAÇÃO';
     }
     this.coords = this.markerProvider.getNewMarkerLocation();
-    this.currentMapId = JSON.parse(sessionStorage.getItem('currentMapId'));
   }
 
   ionViewDidLoad():void{
@@ -83,7 +84,7 @@ export class ManageMarkerPage {
   private audioDuration:number;
   private markerFormSubmitted:boolean = false;
   private editMode:boolean = false;
-  // private mapToEdit:any;
+  private markerToEdit:any = this.markerProvider.getCurrentMarkerToEdit();
   private previousRecordedAudioInfo:any;
   private isAudioLoaded:boolean = false;
   private isPictureTook:boolean = false;
@@ -117,27 +118,33 @@ export class ManageMarkerPage {
 
   enterEditMode():void{
     this.editMode = true;
-    // this.mapToEdit = JSON.parse(sessionStorage.getItem('mapToEdit'));
-    // sessionStorage.removeItem('mapToEdit');
-    // this.newMarkerForm.controls['name'].setValue(this.mapToEdit.name);
-    // this.newMarkerForm.controls['name'].markAsDirty();
-    // if (this.mapToEdit.textualDescription){
-    //   this.newMarkerForm.controls['textualDescription'].setValue(this.mapToEdit.textualDescription);
-    // } else if (this.mapToEdit.voiceDescription){
-    //   this.isAudioRecorded = true;
-    //   this.secondsElapsed = 0;
-    //   //it waits for a json containing the audio information and for the file in the root of the internal memory with its original filename (not the id)
-    //   this.mapProvider.retrieveAudioContent(this.mapToEdit.voiceDescription).then(fileContent => {
-    //     console.log('file content: ', fileContent)
-    //     this.previousRecordedAudioInfo = fileContent;
-    //     this.audioDuration = this.previousRecordedAudioInfo.audioDuration;
-    //     this.mapAudioDescription = this.media.create(this.previousRecordedAudioInfo._id);
-    //     this.isAudioLoaded = true;
-    //   }).catch(error => {
-    //     this.isAudioLoaded = true;
-    //     console.log(error);
-    //   });
-    // };
+    this.markerToEdit = this.markerProvider.getCurrentMarkerToEdit();
+    let markerProperties = this.markerToEdit.properties;
+    this.newMarkerForm.controls['name'].setValue(markerProperties.name);
+    this.newMarkerForm.controls['name'].markAsDirty();
+    console.log(markerProperties)
+    if (markerProperties.textualDescription){
+      if (markerProperties.textualDescription.length > 0){
+        console.log('textualDescription');
+        this.newMarkerForm.controls['textualDescription'].setValue(markerProperties.textualDescription);
+      }
+    } else if (markerProperties.voiceDescriptionId){
+      console.log('voiceDescription');
+      this.isAudioRecorded = true;
+      this.secondsElapsed = 0;
+      //it waits for a json containing the audio information and for the file in the root of the internal memory with its original filename (not the id)
+      this.markerProvider.retrieveAudioContent(markerProperties.voiceDescriptionId).then(fileContent => {
+        console.log('file content: ', fileContent);
+        this.previousRecordedAudioInfo = fileContent;
+        console.log(this.previousRecordedAudioInfo);
+        this.audioDuration = this.previousRecordedAudioInfo.audioDuration;
+        this.markerAudioDescription = this.media.create(this.previousRecordedAudioInfo._id);
+        this.isAudioLoaded = true;
+      }).catch(error => {
+        this.isAudioLoaded = true;
+        console.log(error);
+      });
+    };
   }
 
   startRecording():void{

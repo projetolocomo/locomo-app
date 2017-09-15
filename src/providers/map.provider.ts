@@ -48,7 +48,7 @@ export class MapProvider {
   retrieveUserMaps(){
     this.buildUrls();
     console.log('retrieving user maps from url ' + this.serverUrl + this.userData.id + '/maps/?token=' + this.userData.token);
-    return this.http.get(this.serverUrl + this.userData.id + '/maps', {params:{'token':this.userData.token}})
+    return this.http.get(this.serverUrl + this.userData.id + '/maps', {params:{'token':this.userData.token}}).timeout(5000)
                     .map((response:Response) => {
                       return response.json();
                     }).catch((error:Response) => {
@@ -178,7 +178,7 @@ export class MapProvider {
   }
 
   sendMap(mapData){
-    return this.http.post(this.mapManagementUrl, mapData).map((response:Response) => {
+    return this.http.post(this.mapManagementUrl, mapData).timeout(5000).map((response:Response) => {
       console.log('response from server: ', response.json());
       if (mapData.previousVoiceDescription){
         this.fileProvider.removeFileFromCache('audio', mapData.previousVoiceDescription);
