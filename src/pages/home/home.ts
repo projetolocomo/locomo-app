@@ -81,8 +81,10 @@ export class HomePage {
   // };
 
   editMap(map):void{
-    sessionStorage.setItem("mapToEdit", JSON.stringify(map));
-    this.navCtrl.push(ManageMapPage, { "parentPage":this });;
+    // sessionStorage.setItem("mapToEdit", JSON.stringify(map));
+    // this.navCtrl.push(ManageMapPage, { "parentPage":this });;
+    this.mapProvider.setMapToEdit(map);
+    this.navCtrl.push(ManageMapPage);
   }
 
   openMap(map){

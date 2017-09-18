@@ -4,6 +4,7 @@ import { NavController, NavParams, Alert, AlertController, Platform, Navbar, Loa
 import { Media, MediaObject } from '@ionic-native/media';
 import { Diagnostic } from '@ionic-native/diagnostic';
 import { Camera, CameraOptions } from '@ionic-native/camera';
+import { File } from '@ionic-native/file';
 import { Subscription } from "rxjs";
 import { TimerObservable } from "rxjs/observable/TimerObservable";
 
@@ -31,6 +32,7 @@ export class ManageMarkerPage {
               private diagnostic:Diagnostic,
               private loadingCtrl:LoadingController,
               private toastCtrl:ToastController,
+              private file:File,
               private camera:Camera,
               private permissionProvider:PermissionProvider,
               private fileProvider:FileProvider,
@@ -72,6 +74,14 @@ export class ManageMarkerPage {
   }
 
   private pageTitle:string;
+  // private audioControl:any = {
+  //   isRecordingAudio: false,
+  //   isAudioRecorded: false,
+  //   isPlayingAudio: false,
+  //   isAudioLoaded: false,
+  //   currentAudioName: null,
+  //   audioDuration: null
+  // }
   private recordingAudio:boolean = false;
   private isAudioRecorded:boolean = false;
   private timer:any = TimerObservable.create(0, 1000);
@@ -86,8 +96,10 @@ export class ManageMarkerPage {
   private editMode:boolean = false;
   private markerToEdit:any = this.markerProvider.getCurrentMarkerToEdit();
   private previousRecordedAudioInfo:any;
+  private prevTookPictureInfo:any;
   private isAudioLoaded:boolean = false;
   private isPictureTook:boolean = false;
+  private isPictureLoaded:boolean = false;
   private pictureUri:string = null;
   private coords:any;
   private isPictureFromGallery:boolean = false;
@@ -119,32 +131,48 @@ export class ManageMarkerPage {
   enterEditMode():void{
     this.editMode = true;
     this.markerToEdit = this.markerProvider.getCurrentMarkerToEdit();
+    console.log(this.markerToEdit.voiceDescriptionId, this.editMode, this.isAudioLoaded)
     let markerProperties = this.markerToEdit.properties;
     this.newMarkerForm.controls['name'].setValue(markerProperties.name);
     this.newMarkerForm.controls['name'].markAsDirty();
     console.log(markerProperties)
     if (markerProperties.textualDescription){
       if (markerProperties.textualDescription.length > 0){
-        console.log('textualDescription');
+        console.log('marker contains textualDescription');
         this.newMarkerForm.controls['textualDescription'].setValue(markerProperties.textualDescription);
       }
     } else if (markerProperties.voiceDescriptionId){
-      console.log('voiceDescription');
+      console.log('marker contains voiceDescription');
       this.isAudioRecorded = true;
       this.secondsElapsed = 0;
       //it waits for a json containing the audio information and for the file in the root of the internal memory with its original filename (not the id)
       this.markerProvider.retrieveAudioContent(markerProperties.voiceDescriptionId).then(fileContent => {
-        console.log('file content: ', fileContent);
+        console.log('audio meta', fileContent);
         this.previousRecordedAudioInfo = fileContent;
-        console.log(this.previousRecordedAudioInfo);
+        // console.log(this.previousRecordedAudioInfo);
         this.audioDuration = this.previousRecordedAudioInfo.audioDuration;
         this.markerAudioDescription = this.media.create(this.previousRecordedAudioInfo._id);
         this.isAudioLoaded = true;
-      }).catch(error => {
+      }).catch(e => {
         this.isAudioLoaded = true;
-        console.log(error);
+        console.log(e);
       });
-    };
+    }
+    if (markerProperties.pictureId){
+      console.log('marker contains picture');
+      this.isPictureTook = true;
+      this.markerProvider.retrievePictureContent(markerProperties.pictureId).then(fileContent => {
+        console.log('picture meta', fileContent);
+        this.prevTookPictureInfo = fileContent;
+        this.isPictureLoaded = true;
+        this.pictureUri = this.file.externalCacheDirectory + fileContent._id + '.jpg';
+        this.isPictureFromGallery = false;
+        document.getElementById('thumbnail').setAttribute('src', this.pictureUri);
+      }).catch(e => {
+        this.isPictureLoaded = true;
+        console.log(e);
+      })
+    }
   }
 
   startRecording():void{
@@ -176,7 +204,7 @@ export class ManageMarkerPage {
       } else {
         this.permissionProvider.requestMicrophoneAndFileAuthorization();
       }
-    };
+    }
     let error = (e) => {
       this.alert = this.alertCtrl.create({
         title: 'Erro',
@@ -297,12 +325,11 @@ export class ManageMarkerPage {
        console.log('image URI: ', imageURI);
        this.isPictureTook = true;
        this.pictureUri = imageURI;
-       this.isPictureFromGallery = false;
+       this.isPictureFromGallery = false;     
        document.getElementById('thumbnail').setAttribute('src', imageURI);
-      }, (err) => {
-       // Handle error
+      }, (e) => {
        this.isPictureTook = false;
-       console.log('error on camera :( ', err);
+       console.log('error on camera :( ', e);
       });
     }
   }
@@ -326,9 +353,9 @@ export class ManageMarkerPage {
         this.pictureUri = imageURI;
         this.isPictureFromGallery = true;
         document.getElementById('thumbnail').setAttribute('src', imageURI);
-      }, (err) => {
+      }, (e) => {
         this.isPictureTook = false;
-        console.log('error on seleting image', err);
+        console.log('error on selecting image', e);
       });
     }
   }
@@ -349,41 +376,41 @@ export class ManageMarkerPage {
   //IF FILE CONTAINS PREVIOUS VOICEDESCRIPTION, THEN REMOVE!!!
   updateMarker(){
     let loading = this.loadingCtrl.create({
-      content: 'Salvando mapa...'
+      content: 'Salvando marcação...'
     });
     loading.present();
-    // this.markerProvider.updateMarker(this.mapToEdit, this.newMarkerForm.value, this.currentAudioName, this.audioDuration, this.isAudioRecorded).then((response) => {
-    //   console.log('response from mapProvider.updateMap(): ', response)
-    //   if (response == 'noChanges'){
-    //     let toast = this.toastCtrl.create({
-    //       message: 'Não houveram mudanças',
-    //       duration: 3000
-    //     });
-    //     toast.present();
-    //   } else {
-    //     console.log('updating: ', response);
-    //     let toast = this.toastCtrl.create({
-    //       message: 'Marcação atualizada',
-    //       duration: 3000
-    //     });
-    //     toast.present();
-    //   }
-    //   loading.dismiss();
-    //   // this.navParams.get("parentPage").loadMaps();
-    //   this.navCtrl.pop();
-    // }).catch((e) => {
-    //   this.alert = this.alertCtrl.create({
-    //     title: 'Erro',
-    //     subTitle: 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
-    //     buttons: ['Ok']
-    //   });
-    //   this.alert.present();
-    // })
+    this.markerProvider.updateMarker(this.markerToEdit, this.newMarkerForm.value, this.currentAudioName, this.audioDuration, this.isAudioRecorded).then((response) => {
+      console.log('response from mapProvider.updateMap(): ', response)
+      if (response == 'noChanges'){
+        let toast = this.toastCtrl.create({
+          message: 'Não houveram mudanças',
+          duration: 3000
+        });
+        toast.present();
+      } else {
+        console.log('updating: ', response);
+        let toast = this.toastCtrl.create({
+          message: 'Marcação atualizada',
+          duration: 3000
+        });
+        toast.present();
+      }
+      loading.dismiss();
+      // this.navParams.get("parentPage").loadMaps();
+      this.navCtrl.pop();
+    }).catch((e) => {
+      this.alert = this.alertCtrl.create({
+        title: 'Erro',
+        subTitle: 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
+        buttons: ['Ok']
+      });
+      this.alert.present();
+    })
   }
 
   removeMarker(){
     this.alert = this.alertCtrl.create({
-      message: 'Tem certeza de que deseja excluir este mapa? Todas as notas de áudio e fotos associadas a ele também serão removidas.',
+      message: 'Tem certeza de que deseja excluir esta marcação?',
       buttons: [
         {
           text: 'Excluir',
@@ -391,21 +418,28 @@ export class ManageMarkerPage {
             this.loading = this.loadingCtrl.create({
               content: 'Excluindo marcação...'
             });
-            // this.loading.present().then(() => {
-            //   this.markerProvider.removeMap(this.mapToEdit).then((response) => {
-            //     console.log('response from mapProvider.removeMap(): ', response);
-            //     this.dismissLoading();
-            //     if (response.ok){
-            //       this.toast = this.toastCtrl.create({
-            //         message: 'Mapa removido',
-            //         duration: 3000
-            //       });
-            //       this.toast.present();
-            //       // this.navParams.get("parentPage").loadMaps();
-            //       this.navCtrl.pop();
-            //     }
-            //   });
-            // });
+            this.loading.present().then(() => {
+              this.markerProvider.removeMarker(this.markerToEdit).then((response) => {
+                console.log('response from mapProvider.removeMarker(): ', response);
+                this.dismissLoading();
+                if (response.ok){
+                  this.toast = this.toastCtrl.create({
+                    message: 'Marcação removida',
+                    duration: 3000
+                  });
+                  this.toast.present();
+                  // this.navParams.get("parentPage").loadMaps();
+                  this.navCtrl.pop();
+                }
+              }).catch((e) => {
+                this.dismissLoading();
+                this.toast = this.toastCtrl.create({
+                  message: 'Falha na solicitação. Tente novamente.',
+                  duration: 4000
+                });
+                this.toast.present();
+              });
+            });
           }
         },
         {
@@ -417,71 +451,88 @@ export class ManageMarkerPage {
   }
 
   confirmExit():void{
-    if (!this.editMode){
-      if (this.isAudioRecorded || this.newMarkerForm.controls['name'].value.length > 0 || this.newMarkerForm.controls['textualDescription'].value.length > 0){
-        let alert = this.alertCtrl.create({
-          message: 'Deseja sair sem salvar?',
-          buttons: [
-            {
-              text: 'Sair',
-              handler: () => {
-                if (this.isAudioRecorded){
-                  this.removeRecording();
-                } else {
-                  this.navCtrl.pop();
-                }
-              }
-            },
-            {
-              text: 'Cancelar'
-            }          
-          ]
-        });
-        alert.present();
-      } else {
-        this.navCtrl.pop();
-      }
-    } else {
-      // if (this.currentAudioName || this.newMarkerForm.controls['name'].value !== this.markerToEdit.name || this.newMarkerForm.controls['textualDescription'].value !== this.mapToEdit.textualDescription){
-      //   let alert = this.alertCtrl.create({
-      //     message: 'Deseja sair sem salvar?',
-      //     buttons: [
-      //       {
-      //         text: 'Sair',
-      //         handler: () => {
-      //           if (this.isAudioLoaded){
-      //             if (this.previousRecordedAudioInfo.isDownloaded){
-      //               this.fileProvider.moveUploadedFileToCache(this.previousRecordedAudioInfo);
-      //               this.navCtrl.pop();
-      //             }
-      //             // this.removeRecording();
-      //           } else {
-      //             this.navCtrl.pop();
-      //           }
-      //         }
-      //       },
-      //       {
-      //         text: 'Cancelar'
-      //       }          
-      //     ]
-      //   });
-      //   alert.present();
-      // } else {
-      //   if (this.isAudioLoaded){
-      //     if (this.previousRecordedAudioInfo.isDownloaded){
-      //       this.fileProvider.moveUploadedFileToCache(this.previousRecordedAudioInfo);
-      //       this.navCtrl.pop();
-      //     } else {
-      //       this.removeRecording();
-      //       this.navCtrl.pop();
-      //     }
-      //   } if (this.isAudioRecorded){
-      //     this.removeRecording();
-      //   } else {
-      //     this.navCtrl.pop();
-      //   }
-      // }
-    }
+    // if (!this.editMode){
+    //   if (this.isAudioRecorded || this.newMarkerForm.controls['name'].value.length > 0 || this.newMarkerForm.controls['textualDescription'].value.length > 0){
+    //     let alert = this.alertCtrl.create({
+    //       message: 'Deseja sair sem salvar?',
+    //       buttons: [
+    //         {
+    //           text: 'Sair',
+    //           handler: () => {
+    //             if (this.isAudioRecorded){
+    //               this.removeRecording();
+    //             } else {
+    //               this.navCtrl.pop();
+    //             }
+    //           }
+    //         },
+    //         {
+    //           text: 'Cancelar'
+    //         }          
+    //       ]
+    //     });
+    //     alert.present();
+    //   } else {
+    //     this.navCtrl.pop();
+    //   }
+    // } else {
+    //   //considerar mudança de foto
+    //   if (this.currentAudioName || this.newMarkerForm.controls['name'].value !== this.markerToEdit.properties.name || this.newMarkerForm.controls['textualDescription'].value !== this.markerToEdit.properties.textualDescription){
+    //     let alert = this.alertCtrl.create({
+    //       message: 'Deseja sair sem salvar?',
+    //       buttons: [
+    //         {
+    //           text: 'Sair',
+    //           handler: () => {
+    //             if (this.isAudioLoaded || this.isPictureTook){
+    //               if (this.previousRecordedAudioInfo.isDownloaded){
+    //                 this.fileProvider.moveUploadedFileToCache(this.previousRecordedAudioInfo);
+    //                 this.navCtrl.pop();
+    //               }
+    //               if (this.prevTookPictureInfo.isDownloaded){
+    //                 this.fileProvider.moveUploadedFileToCache(this.prevTookPictureInfo);
+    //                 this.navCtrl.pop();
+    //               }
+    //               // this.removeRecording();
+    //             } else {
+    //               this.navCtrl.pop();
+    //             }
+    //           }
+    //         },
+    //         {
+    //           text: 'Cancelar'
+    //         }          
+    //       ]
+    //     });
+    //     alert.present();
+    //   } else {
+    //     if (this.isAudioLoaded){
+    //       if (this.previousRecordedAudioInfo.isDownloaded){
+    //         this.fileProvider.moveUploadedFileToCache(this.previousRecordedAudioInfo);
+    //         this.navCtrl.pop();
+    //       } else {
+    //         this.removeRecording();
+    //         this.navCtrl.pop();
+    //       }
+    //     } else {
+    //       this.removeRecording();
+    //       this.navCtrl.pop();
+    //     }
+    //     if (this.isPictureTook){
+    //       if (this.prevTookPictureInfo.isDownloaded){
+    //         this.fileProvider.moveUploadedFileToCache(this.prevTookPictureInfo);
+    //         this.navCtrl.pop();
+    //       } else {
+    //         this.removePicture();
+    //         this.navCtrl.pop();
+    //       }
+    //     } else {
+    //       this.removePicture();
+    //       this.navCtrl.pop();
+    //     }
+    //   }
+    // }
+    this.navCtrl.pop();
   }
 
 }

@@ -170,7 +170,7 @@ export class MapMainPage {
       this.markers = markersData;
     });
     let initLocation = this.watchLocation.subscribe((data) => {
-      console.log('accuracy of location obtained: ', data.coords.accuracy);
+      console.log('accuracy of obtained location: ', data.coords.accuracy);
       if (data.coords.accuracy < 30){
         this.isLocationAcquired = true;
         this.loading.dismiss();
@@ -180,9 +180,8 @@ export class MapMainPage {
          target: {lat:data.coords.latitude, lng:data.coords.longitude},
          zoom: 18,
          duration: 3000
-        }, function() {
-          initLocation.unsubscribe();
         });
+        initLocation.unsubscribe();
       }
     });  
     // this.map.on(plugin.google.maps.event.CAMERA_MOVE_START, this.setMapCenteredFalse);

@@ -4,12 +4,16 @@ import { Observable } from 'rxjs';
 import { Headers } from '@angular/http';
 import 'rxjs/add/operator/map';
 
+import { UrlProvider } from './url.provider';
+
 @Injectable()
 export class UserProvider {
-  constructor(public http:Http){}
+  constructor(public http:Http,
+              private urlProvider:UrlProvider){
 
-  private serverUrl:string = 'http://192.168.137.1:3000/api/';  
-  // private serverUrl:string = 'http://locomo.eu-4.evennode.com/api/';
+              }
+
+  private serverUrl:string = this.urlProvider.getServerUrl();
 
   login(loginData:any):any{
     return this.http.post(this.serverUrl + 'login', loginData).map((response:Response) => {

@@ -9,9 +9,15 @@
   font-family: 'Montserrat';
 }
 
-.button-md {
+.button-default-md {
   text-transform: none;
   border-radius: 5px;
+  height: 4.6rem;
+  font-size: 1.8rem;
+}
+
+.button-md {
+  text-transform: none !important;
 }
 
 .vertical-center {
@@ -112,7 +118,7 @@ ion-label {
   text-align: center;
 }
 
-.loading-audio {
+.loading-audio, .loading-picture {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -126,13 +132,20 @@ ion-label {
   z-index: 100;
 }
 
-.loading-audio > ion-spinner {
+.loading-picture {
+  background-color: map-get($colors, primary); 
+  left: 0;
+  right: 0;
+  border-radius: 5px;
+}
+
+.loading-audio > ion-spinner, .loading-picture > ion-spinner {
   margin: 1em;
   width: 20px;
   height: 20px;
 }
 
-.loading-audio > ion-spinner * {
+.loading-audio > ion-spinner *, .loading-picture > ion-spinner * {
   stroke: #fff;
   // fill: #fff;
 }
@@ -198,7 +211,7 @@ ion-label {
 
 .image-thumbnail-container {
   display: flex;
-  /* align-items: center; */
+  position: relative;
   justify-content: center;
   color: #999;
   padding: 40px;
@@ -383,10 +396,10 @@ ion-textarea {
 }
 
 .center-map {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   position: absolute;
-  bottom: 20px;
+  bottom: 22px;
   right: 20px;
   background: #5125ad;
   border-radius: 50%;
@@ -398,6 +411,11 @@ ion-textarea {
 .center-map ion-icon {
   font-size: 2.5em;
   color: white;
+  margin: 2.4px;
+}
+
+.manage-entity-form {
+  margin-bottom: 10px;
 }
 
 #map {
@@ -421,13 +439,14 @@ ion-textarea {
   border: none !important;
   border-bottom: 1px solid rgb(204, 204, 204) !important;
   overflow: hidden;
+  height: 60px;
 }
 
 #map > div > div:nth-child(1) > div {
   display: flex;
   align-items: center;
   font-size: 1.2em;
-  padding: 15px !important;
+  padding: 19px !important;
   background: #5125ad;
   color: white;
   width: 100%;
@@ -435,10 +454,10 @@ ion-textarea {
 
 #map > div img {
   position: absolute;
-  right: 10px;
+  right: 15px;
   width: 25px;
   height: 25px;
-  top: 12px;
+  top: 17px;
 }
 
 #map > div > div:nth-child(2) {

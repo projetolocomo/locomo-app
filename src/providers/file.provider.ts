@@ -28,6 +28,7 @@ export class FileProvider {
   }
 
   moveUploadedFileToCache(uploadResponse):void{
+    console.log('moving', uploadResponse);
     let fileId:string = uploadResponse._id;
     let filename:string = uploadResponse.filename;
     let contentType:string = uploadResponse.contentType;
@@ -37,7 +38,7 @@ export class FileProvider {
       metaFolder = 'audio/meta';
       if (uploadResponse.isDownloaded){
         delete uploadResponse.isDownloaded;
-        console.log('moving ' + filename + ' from ' + this.rootDirectory + ' to ' + this.cacheDirectory + '/audio and renaming to ' + fileId + '.mp3' );
+        console.log('moving downloaded audio ' + fileId + ' from ' + this.rootDirectory + ' to ' + this.cacheDirectory + '/audio');
         this.file.moveFile(this.rootDirectory, fileId + '.mp3', this.cacheDirectory + 'audio', fileId + '.mp3');
       } else {
         console.log('moving recorded file ' + filename + ' from ' + this.rootDirectory + ' to ' + this.cacheDirectory + '/audio and renaming to ' + fileId + '.mp3' );
@@ -111,6 +112,23 @@ export class FileProvider {
       });
     }).catch(error => {
       throw new Error(error);
+    });
+  }
+
+  retrievePictureFileContent(fileId){
+    console.log("checking " + this.cacheDirectory + 'pictures/' + fileId + '.jpg and json in pictures/meta');
+    return this.file.checkFile(this.cacheDirectory + 'pictures/', fileId + '.jpg').then(pictureCheckResult => {
+      return this.file.checkFile(this.cacheDirectory + 'pictures/meta/', fileId + '.json').then(metaCheckResult => {
+        return this.file.readAsText(this.cacheDirectory + 'pictures/meta/', fileId + '.json').then(fileContents => {
+          let file = JSON.parse(fileContents);
+          this.file.copyFile(this.cacheDirectory + 'pictures/', fileId + '.jpg', this.cacheDirectory, fileId + '.jpg');
+          return file;
+        });
+      }).catch(e => {
+        throw new Error(e);
+      });
+    }).catch(e => {
+      throw new Error(e);
     });
   }
 

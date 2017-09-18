@@ -35,7 +35,8 @@ export class ManageMapPage {
               private mapProvider:MapProvider){}
 
   ionViewDidEnter():void{
-    if (sessionStorage.getItem('mapToEdit')){
+    console.log('mapProvider map to edit', this.mapProvider.getMapToEdit());
+    if (this.mapProvider.getMapToEdit()){
       this.pageTitle = 'EDITAR INFORMAÇÕES DO MAPA';
       this.enterEditMode();
     } else {
@@ -64,6 +65,7 @@ export class ManageMapPage {
     this.platform.registerBackButtonAction((e:UIEvent) => {
       return true;
     });
+    this.mapProvider.setMapToEdit(null);
   }
 
   private pageTitle:string;
@@ -107,7 +109,7 @@ export class ManageMapPage {
 
   enterEditMode():void{
     this.editMode = true;
-    this.mapToEdit = JSON.parse(sessionStorage.getItem('mapToEdit'));
+    this.mapToEdit = this.mapProvider.getMapToEdit();
     sessionStorage.removeItem('mapToEdit');
     this.newMapForm.controls['name'].setValue(this.mapToEdit.name);
     this.newMapForm.controls['name'].markAsDirty();
@@ -222,7 +224,7 @@ export class ManageMapPage {
   manageMap(){
     this.mapFormSubmitted = true;
     if (!this.editMode){
-      console.log("mapForm validation status: ", this.newMapForm.valid)
+      console.log("mapForm validation status: ", this.newMapForm.valid);
       if (this.newMapForm.valid){
         if (this.isAudioRecorded){
           this.mapAudioDescription.release();
@@ -388,9 +390,9 @@ export class ManageMapPage {
             this.removeRecording();
             this.navCtrl.pop();
           }
-        } if (this.isAudioRecorded){
-          this.removeRecording();
         } else {
+          console.log('is audio recorded', this.isAudioRecorded);
+          this.removeRecording();
           this.navCtrl.pop();
         }
       }

@@ -8,7 +8,7 @@
 
 <ion-content padding>
   <ion-list>
-    <form [formGroup]="newMapForm">
+    <form [formGroup]="newMapForm" class="manage-entity-form">
       <ion-item>
         <ion-label stacked>Nome do mapa</ion-label>
         <ion-input type="text" formControlName="name" validate-onblur></ion-input>
@@ -46,7 +46,7 @@
       </ion-grid>
     </form>
     <div class="vertical-center">
-      <button ion-button outline *ngIf="editMode" (click)="removeMap()">Excluir mapa</button>
+      <button ion-button outline small *ngIf="editMode" (click)="removeMap()">Excluir mapa</button>
     </div>
   </ion-list>
 </ion-content>

@@ -8,6 +8,7 @@ import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-nati
 import 'rxjs/add/observable/fromPromise';
 
 import { MapProvider } from './map.provider';
+import { UrlProvider } from './url.provider';
 
 @Injectable()
 export class MarkerProvider {
@@ -16,9 +17,10 @@ export class MarkerProvider {
               private mapProvider:MapProvider,
               public platform:Platform,
               public fileTransfer:FileTransfer,
-              public file:File){}
+              public file:File,
+              private urlProvider:UrlProvider){}
 
-  private serverUrl:string = 'http://192.168.137.1:3000/api/';
+  private serverUrl:string = this.urlProvider.getServerUrl();
   
   // private serverUrl:string = 'http://locomo.eu-4.evennode.com/api/';
   // private downloadUrl = this.serverUrl + this.userData.id + '/files/598b65362f55060fa0518a49?token=' + this.userData.token;
@@ -70,7 +72,7 @@ export class MarkerProvider {
   //     return fileContents;
   //   }).catch((fileError) => {
   //     console.log("data not found locally, obtaining from server");
-  //     return this.http.get(this.serverUrl + this.userData.id + '/files/' + audioId + '/details', {params:{'token':this.userData.token}})
+  //     return this.http.get(this.serverUrl + this.userData.id + '/files/' + audioId, {params:{'token':this.userData.token}})
   //                     .map(response => {
   //                       console.log(response.json())
   //                       let fileDetails = response.json();
@@ -107,10 +109,12 @@ export class MarkerProvider {
   }
 
   newMarker(mapId, markerData, coords, audioRecordingName, audioDuration, pictureUri, isPictureFromGallery){
+    console.log(mapId, markerData, coords, audioRecordingName, audioDuration, pictureUri, isPictureFromGallery)
     if (audioRecordingName && !pictureUri){
       console.log('only audio');
       return this.uploadFile(this.rootPath, audioRecordingName, 'audio/mp3', audioDuration).then((response:string) => {
         let audioUploadResponse = JSON.parse(response);
+        this.fileProvider.moveUploadedFileToCache(audioUploadResponse);
         let geoJsonMarkerData = this.generateGeoJson(mapId, markerData, coords, audioUploadResponse._id, null);
         return this.sendMarker(geoJsonMarkerData);
       });
@@ -122,7 +126,7 @@ export class MarkerProvider {
       };
       return this.uploadFile(pictureUri,  fileName, 'image/jpeg', undefined).then((response:string) => {
         let pictureUploadResponse = JSON.parse(response);
-        this.fileProvider.moveUploadedFileToCache(pictureUploadResponse);        
+        this.fileProvider.moveUploadedFileToCache(pictureUploadResponse);      
         let geoJsonMarkerData = this.generateGeoJson(mapId, markerData, coords, undefined, pictureUploadResponse._id);
         return this.sendMarker(geoJsonMarkerData);
       });
@@ -131,6 +135,7 @@ export class MarkerProvider {
       let audioUploadResponse;
       return this.uploadFile(this.rootPath, audioRecordingName, 'audio/mp3', audioDuration).then((response:string) => {
         audioUploadResponse = JSON.parse(response);
+        this.fileProvider.moveUploadedFileToCache(audioUploadResponse);        
         let fileName = pictureUri.substring(pictureUri.lastIndexOf('/') + 1);
         if (isPictureFromGallery){
           fileName = fileName.substring(0, fileName.lastIndexOf('?'));
@@ -138,7 +143,7 @@ export class MarkerProvider {
         return this.uploadFile(pictureUri,  fileName, 'image/jpeg', undefined).then((response:string) => {
           let pictureUploadResponse = JSON.parse(response);
           //moves audio and picture to right folder only with both uploads are ok
-          this.fileProvider.moveUploadedFileToCache(audioUploadResponse);
+          this.fileProvider.moveUploadedFileToCache(pictureUploadResponse);
           let geoJsonMarkerData = this.generateGeoJson(mapId, markerData, coords, audioUploadResponse._id, pictureUploadResponse._id);
           return this.sendMarker(geoJsonMarkerData);
         });
@@ -156,14 +161,14 @@ export class MarkerProvider {
       return fileContents;
     }).catch((fileError) => {
       console.log("data not found locally, obtaining from server");
-      return this.http.get(this.serverUrl + this.userData.id + '/files/' + audioId + '/details', {params:{'token':this.userData.token}})
+      return this.http.get(this.urlProvider.getFileMetaUrl(audioId))
                       .map(response => {
                         console.log(response.json())
                         let fileDetails = response.json();
                         let ft = this.fileTransfer.create();
-                        console.log(this.serverUrl + this.userData.id + '/files/' + audioId + '?token=' + this.userData.token)
-                        console.log(this.file.externalRootDirectory + fileDetails._id + '.mp3')
-                        return ft.download(this.serverUrl + this.userData.id + '/files/' + audioId + '?token=' + this.userData.token, this.file.externalRootDirectory + fileDetails._id + '.mp3').then((entry) => {
+                        // console.log(this.serverUrl + this.userData.id + '/files/' + audioId + '?token=' + this.userData.token)
+                        // console.log(this.file.externalRootDirectory + fileDetails._id + '.mp3')
+                        return ft.download(this.urlProvider.getFileDownloadUrl(audioId), this.file.externalRootDirectory + fileDetails._id + '.mp3').then((entry) => {
                           fileDetails.isDownloaded = true;
                           return fileDetails;
                         }, (error) => {
@@ -171,6 +176,31 @@ export class MarkerProvider {
                         });
                       }).catch(error => {
                         throw new Error(error);
+                      }).toPromise()
+    });
+  }
+
+  retrievePictureContent(pictureId){
+    return this.fileProvider.retrievePictureFileContent(pictureId).then(fileContents => {
+      console.log("obtained data from local");
+      return fileContents;
+    }).catch((fileError) => {
+      console.log("data not found locally, obtaining from server");
+      return this.http.get(this.urlProvider.getFileMetaUrl(pictureId))
+                      .map(response => {
+                        console.log(response.json())
+                        let fileDetails = response.json();
+                        let ft = this.fileTransfer.create();
+                        // console.log(this.serverUrl + this.userData.id + '/files/' + audioId + '?token=' + this.userData.token)
+                        // console.log(this.file.externalRootDirectory + fileDetails._id + '.mp3')
+                        return ft.download(this.urlProvider.getFileDownloadUrl(pictureId), this.file.externalCacheDirectory + fileDetails._id + '.jpg').then((entry) => {
+                          fileDetails.isDownloaded = true;
+                          return fileDetails;
+                        }, (e) => {
+                          throw new Error(e);                          
+                        });
+                      }).catch(e => {
+                        throw new Error(e);
                       }).toPromise()
     });
   }
@@ -193,82 +223,82 @@ export class MarkerProvider {
     return geoJsonObject;
   }
 
-  // updateMap(previousMapData, newMapData, currentAudioName, audioDuration, isAudioRecorded){
-  //   let textualChanges:boolean = false;
-  //   let audioChanges:boolean = false;
-  //   if (previousMapData.name !== newMapData.name){
-  //     console.log('name changed');
-  //     textualChanges = true;
-  //   }
-  //   if (!isAudioRecorded){
-  //     if (previousMapData.textualDescription || newMapData.textualDescription){
-  //       if (previousMapData.textualDescription !== newMapData.textualDescription){
-  //         console.log('textual description changed');
-  //         textualChanges = true;
-  //       }
-  //     } if (previousMapData.voiceDescription){
-  //       console.log('previous voice description removed'); //remover antiga 
-  //       textualChanges = true;
-  //     }
-  //   } else {
-  //     if (previousMapData.voiceDescription){
-  //       console.log('voice description changed to another voice description'); //remover antiga
-  //       audioChanges = true;
-  //     } if (previousMapData.textualDescription){
-  //       console.log('textual description changed to voice description');
-  //       audioChanges = true;
-  //     } else {
-  //       console.log('added voice description');
-  //       audioChanges = true;
-  //     }
-  //   }
-  //   if (audioChanges){ //send new audio
-  //     console.log('audio changes');
-  //     return this.uploadFile(this.rootPath, currentAudioName, 'audio/mp3', audioDuration).then((response:string) => {
-  //       let uploadResponse = JSON.parse(response);
-  //       this.fileProvider.moveUploadedFileToCache(uploadResponse);
-  //       newMapData._id = previousMapData._id;
-  //       newMapData.previousVoiceDescription = previousMapData.voiceDescription;
-  //       newMapData.voiceDescription = uploadResponse._id;
-  //       console.log("data sent: ", newMapData);
-  //       return this.sendMap(newMapData).then((response) => {
-  //         if (previousMapData.voiceDescription){
-  //           this.fileProvider.removeFileFromCache('audio', previousMapData.voiceDescription);
-  //         };
-  //         return response;
-  //       }).catch((e) => {
-  //         throw new Error(e);
-  //       });
-  //     });
-  //   } else if (textualChanges){
-  //     console.log('textualChanges');
-  //     newMapData._id = previousMapData._id;
-  //     newMapData.previousVoiceDescription = previousMapData.voiceDescription;
-  //     console.log("data sent: ", newMapData);
-  //     return this.sendMap(newMapData).then((response) => {
-  //       if (previousMapData.voiceDescription && !isAudioRecorded){
-  //         this.fileProvider.removeFileFromCache('audio', previousMapData.voiceDescription);
-  //       };
-  //       return response;
-  //     }).catch((e) => {
-  //       throw new Error(e);
-  //     });
-  //   } else {
-  //     console.log('no changes');
-  //     return Promise.resolve("noChanges");
-  //   }
-  // };
+  updateMarker(previousMarkerData, newMarkerData, currentAudioName, audioDuration, isAudioRecorded){
+    let textualChanges:boolean = false;
+    let audioChanges:boolean = false;
+    if (previousMarkerData.name !== newMarkerData.name){
+      console.log('name changed');
+      textualChanges = true;
+    }
+    if (!isAudioRecorded){
+      if (previousMarkerData.textualDescription || newMarkerData.textualDescription){
+        if (previousMarkerData.textualDescription !== newMarkerData.textualDescription){
+          console.log('textual description changed');
+          textualChanges = true;
+        }
+      } if (previousMarkerData.voiceDescriptionId){
+        console.log('previous voice description removed'); //remover antiga 
+        textualChanges = true;
+      }
+    } else {
+      if (previousMarkerData.voiceDescriptionId){
+        console.log('voice description changed to another voice description'); //remover antiga
+        audioChanges = true;
+      } if (previousMarkerData.textualDescription){
+        console.log('textual description changed to voice description');
+        audioChanges = true;
+      } else {
+        console.log('added voice description');
+        audioChanges = true;
+      }
+    }
+    if (audioChanges){ //send new audio
+      console.log('audio changes');
+      return this.uploadFile(this.rootPath, currentAudioName, 'audio/mp3', audioDuration).then((response:string) => {
+        let uploadResponse = JSON.parse(response);
+        this.fileProvider.moveUploadedFileToCache(uploadResponse);
+        newMarkerData._id = previousMarkerData._id;
+        newMarkerData.previousVoiceDescriptionId = previousMarkerData.voiceDescriptionId;
+        newMarkerData.voiceDescriptionId = uploadResponse._id;
+        console.log("data sent: ", newMarkerData);
+        return this.sendMarker(newMarkerData).then((response) => {
+          if (previousMarkerData.voiceDescriptionId){
+            this.fileProvider.removeFileFromCache('audio', previousMarkerData.voiceDescriptionId);
+          };
+          return response;
+        }).catch((e) => {
+          throw new Error(e);
+        });
+      });
+    } else if (textualChanges){
+      console.log('textualChanges');
+      newMarkerData._id = previousMarkerData._id;
+      newMarkerData.previousVoiceDescriptionId = previousMarkerData.voiceDescriptionId;
+      console.log("data sent: ", newMarkerData);
+      return this.sendMarker(newMarkerData).then((response) => {
+        if (previousMarkerData.voiceDescriptionId && !isAudioRecorded){
+          this.fileProvider.removeFileFromCache('audio', previousMarkerData.voiceDescriptionId);
+        };
+        return response;
+      }).catch((e) => {
+        throw new Error(e);
+      });
+    } else {
+      console.log('no changes');
+      return Promise.resolve("noChanges");
+    }
+  };
 
-  // removeMap(mapData){
-  //   let mapRemovalUrl = this.serverUrl + this.userData.id + '/maps/' + '?token=' + this.userData.token;
-  //   let requestOptions = new RequestOptions({ body:mapData });
-  //   return this.http.delete(mapRemovalUrl, requestOptions).map((response:Response) => {
-  //     return response.json();
-  //     // return this.fileProvider.removeMap(mapData);
-  //   }).catch((error:Response) => {
-  //     return Observable.throw(error);
-  //   }).toPromise();
-  // }
+  removeMarker(markerData){
+    let markerRemovalUrl = this.serverUrl + this.userData.id + '/markers/' + '?token=' + this.userData.token;
+    let requestOptions = new RequestOptions({ body:markerData });
+    return this.http.delete(markerRemovalUrl, requestOptions).timeout(5000).map((response:Response) => {
+      return response.json();
+      // return this.fileProvider.removeMap(mapData);
+    }).catch((error:Response) => {
+      return Observable.throw(error);
+    }).toPromise();
+  }
 
   sendMarker(markerData){
     console.log('sending marker data: ', markerData);

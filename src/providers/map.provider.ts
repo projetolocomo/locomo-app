@@ -7,24 +7,28 @@ import { FileProvider } from './file.provider';
 import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer';
 import 'rxjs/add/observable/fromPromise';
 
+import { UrlProvider } from './url.provider';
+
 @Injectable()
 export class MapProvider {
   constructor(public http:Http,
               public fileProvider:FileProvider,
               public platform:Platform,
               public fileTransfer:FileTransfer,
-              public file:File){
-    this.buildUrls();
-  }
+              public file:File,
+              private urlProvider:UrlProvider){}
 
-  private serverUrl:string = 'http://192.168.137.1:3000/api/';
+  private serverUrl:string = this.urlProvider.getServerUrl();
   // private serverUrl:string = 'http://locomo.eu-4.evennode.com/api/';
+
   private userData:any = {id:null, token:null};
   private mapManagementUrl:string;
   private uploadUrl:string;
-//   private downloadUrl = this.serverUrl + this.userData.id + '/files/598b65362f55060fa0518a49?token=' + this.userData.token
+  // private downloadUrl = this.serverUrl + this.userData.id + '/files/598b65362f55060fa0518a49?token=' + this.userData.token
   private rootPath:string = this.file.externalRootDirectory;
+  private mapToEdit:any;
   private currentMapId:any;
+  private areUrlsBuilt:boolean = false;
 
   setCurrentMapId(mapId):void{
     this.currentMapId = mapId;
@@ -32,6 +36,14 @@ export class MapProvider {
 
   getCurrentMapId():any{
     return this.currentMapId;
+  }
+
+  setMapToEdit(map):void{
+    this.mapToEdit = map;
+  }
+
+  getMapToEdit():any{
+    return this.mapToEdit;
   }
 
   buildUrls(){
@@ -43,33 +55,36 @@ export class MapProvider {
     } else {
       console.log('not logged yet');
     }
-  }
+  };
 
   retrieveUserMaps(){
-    this.buildUrls();
-    console.log('retrieving user maps from url ' + this.serverUrl + this.userData.id + '/maps/?token=' + this.userData.token);
-    return this.http.get(this.serverUrl + this.userData.id + '/maps', {params:{'token':this.userData.token}}).timeout(5000)
+    if (!this.areUrlsBuilt){
+      this.buildUrls();
+      this.areUrlsBuilt = true;
+    };
+    console.log('retrieving user maps from', this.mapManagementUrl);
+    return this.http.get(this.mapManagementUrl)
+                    .timeout(10000)
                     .map((response:Response) => {
                       return response.json();
                     }).catch((error:Response) => {
                       return Observable.throw(error);
                     });
-  }
+  };
 
   retrieveAudioContent(audioId){
     return this.fileProvider.retrieveAudioFileContent(audioId).then(fileContents => {
       console.log("obtained data from local");
       return fileContents;
     }).catch((fileError) => {
-      console.log("data not found locally, obtaining from server");
-      return this.http.get(this.serverUrl + this.userData.id + '/files/' + audioId + '/details', {params:{'token':this.userData.token}})
+      console.log("data not found locally, obtaining from server ", this.urlProvider.getFileDownloadUrl(audioId));
+      return this.http.get(this.urlProvider.getFileMetaUrl(audioId))
                       .map(response => {
-                        console.log(response.json())
+                        // console.log(response.json())
                         let fileDetails = response.json();
                         let ft = this.fileTransfer.create();
-                        console.log(this.serverUrl + this.userData.id + '/files/' + audioId + '?token=' + this.userData.token)
-                        console.log(this.file.externalRootDirectory + fileDetails._id + '.mp3')
-                        return ft.download(this.serverUrl + this.userData.id + '/files/' + audioId + '?token=' + this.userData.token, this.file.externalRootDirectory + fileDetails._id + '.mp3').then((entry) => {
+                        // console.log(this.file.externalRootDirectory + fileDetails._id + '.mp3');
+                        return ft.download(this.urlProvider.getFileDownloadUrl(audioId) , this.file.externalRootDirectory + fileDetails._id + '.mp3').then((entry) => {
                           fileDetails.isDownloaded = true;
                           return fileDetails;
                         }, (error) => {
@@ -79,7 +94,7 @@ export class MapProvider {
                         throw new Error(error);
                       }).toPromise()
     });
-  }
+  };
 
   newMap(mapData, audioRecordingName, audioDuration){
     if (audioRecordingName){
@@ -100,7 +115,7 @@ export class MapProvider {
     if (previousMapData.name !== newMapData.name){
       console.log('name changed');
       textualChanges = true;
-    }
+    };
     if (!isAudioRecorded){
       if (previousMapData.textualDescription || newMapData.textualDescription){
         if (previousMapData.textualDescription !== newMapData.textualDescription){
@@ -122,7 +137,7 @@ export class MapProvider {
         console.log('added voice description');
         audioChanges = true;
       }
-    }
+    };
     if (audioChanges){ //send new audio
       console.log('audio changes');
       return this.uploadFile(this.rootPath, currentAudioName, 'audio/mp3', audioDuration).then((response:string) => {
@@ -157,7 +172,7 @@ export class MapProvider {
     } else {
       console.log('no changes');
       return Promise.resolve("noChanges");
-    }
+    };
   };
 
   //change POST to DELETE and let the server look for the voiceDescriptionId associated to the map (if there is some) and remove the appropriate file
@@ -175,7 +190,7 @@ export class MapProvider {
     }).catch((error:Response) => {
       return Observable.throw(error);
     }).toPromise();
-  }
+  };
 
   sendMap(mapData){
     return this.http.post(this.mapManagementUrl, mapData).timeout(5000).map((response:Response) => {
@@ -202,5 +217,5 @@ export class MapProvider {
       //lidar com possíveis erros de upload aqui
       return Observable.throw(error);
     });
-  }
-}
+  };
+};

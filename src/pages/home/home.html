@@ -10,7 +10,7 @@
   <p class="info-message" *ngIf="loadingFinished === true && userMaps.length == 0">Você ainda não criou nenhum mapa. <br> Vamos criar um agora?</p>
   <div class="map-card" *ngFor="let map of userMaps">
     <div class="map-title" (click)="openMap(map)">{{ map.name }}</div>
-    <div class="map-markers-count" *ngIf="map.markerCount == 0" (click)="openMap(map)">0 marcadores</div>    
+    <div class="map-markers-count" *ngIf="!map.markerCount" (click)="openMap(map)">Sem marcadores</div>    
     <div class="map-markers-count" *ngIf="map.markerCount == 1" (click)="openMap(map)">1 marcador</div>    
     <div class="map-markers-count" *ngIf="map.markerCount > 1" (click)="openMap(map)">{{ map.markerCount }} marcadores</div>    
     <div class="edit-map">

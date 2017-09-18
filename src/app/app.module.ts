@@ -23,6 +23,7 @@ import { PermissionProvider } from '../providers/permission.provider';
 import { FileProvider } from '../providers/file.provider';
 import { MapProvider } from '../providers/map.provider';
 import { MarkerProvider } from '../providers/marker.provider';
+import { UrlProvider } from '../providers/url.provider';
 
 //pages
 import { MyApp } from './app.component';
@@ -74,7 +75,8 @@ import { ManageMarkerPage } from '../pages/manage-marker/manage-marker';
     PermissionProvider,
     FileProvider,
     MapProvider,
-    MarkerProvider
+    MarkerProvider,
+    UrlProvider
   ]
 })
 export class AppModule {}

@@ -86,7 +86,7 @@
     <plugin name="cordova-plugin-file" spec="^4.0.0" />
     <plugin name="cordova-plugin-file-transfer" spec="^1.6.3" />
     <plugin name="cordova-plugin-geolocation" spec="^2.4.3" />
-    <plugin name="cordova-plugin-googlemaps" spec="https://github.com/mapsplugin/cordova-plugin-googlemaps#multiple_maps">
+    <plugin name="cordova-plugin-googlemaps" spec="git+https://github.com/mapsplugin/cordova-plugin-googlemaps.git#multiple_maps">
         <variable name="API_KEY_FOR_ANDROID" value="AIzaSyCMNqdAzXn7yZXt1eNp5FVd-rsowSKKqM0" />
     </plugin>
     <plugin name="cordova-plugin-media" spec="^3.0.1" />
